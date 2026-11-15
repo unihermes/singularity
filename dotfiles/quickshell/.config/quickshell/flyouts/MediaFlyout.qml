@@ -1,7 +1,9 @@
-// The Music module's flyout, one page. A square of art with the title,
-// artist and player beside it and the transport under them; the progress
-// (click to seek). With several sources (players, and a browser's tabs
-// each) a row each, picking which the module follows. A tab the browser's
+// The Music module's flyout, one page. The art across the panel with the
+// spectrum (the bar's style) rising from its foot while something sounds,
+// then the title, artist and player; the progress (click to seek) and the
+// transport. With several sources (players, and a browser's tabs each) the
+// art flips between them (arrows at its sides, a dot each along its top, the
+// wheel) and a row each lists them, picking which the module follows. A tab the browser's
 // player has moved on from shows but takes no transport. The heading's gear
 // opens the options: Visualizer, with its Style and Bars under it while
 // it's on, Title on the bar, Hide when silent, and a way to Settings. Self-contained: only needs the Media and Visualizer singletons.
@@ -16,6 +18,12 @@ FlyoutPanel {
     menuWidth: Theme.flyoutMenuWidth
 
     readonly property var player: Media.player
+    // the source `step` along from the shown one, round the ends
+    function flip(step) {
+        var ss = Media.sources, n = ss.length
+        if (n < 2) return
+        Media.pickSource(ss[(Math.max(0, ss.findIndex(s => Media.isShown(s))) + step + n) % n])
+    }
     // the switches under Options, folded each time this opens
     property bool showOptions: false
     onOpenChanged: if (!open) showOptions = false
@@ -35,106 +43,178 @@ FlyoutPanel {
         onSettingsClicked: mediaFlyout.showOptions = !mediaFlyout.showOptions
     }
 
-    // the art as a square beside the track and its transport
-    Row {
+    // the art across the panel in its own shape (square to 16:9, a video's
+    // thumbnail wider than a cover), or a music mark in a 16:9 frame
+    ClippingRectangle {
+        id: artFrame
         width: parent.width
-        spacing: Theme.spaceL
+        height: Math.round(width / (art.status === Image.Ready && art.implicitHeight > 0
+            ? Math.max(1, Math.min(16 / 9, art.implicitWidth / art.implicitHeight)) : 16 / 9))
+        radius: Theme.radiusInner
+        color: Theme.meterTrack
+        border.width: Theme.borderWidth
+        border.color: Theme.stroke
 
-        ClippingRectangle {
-            id: artFrame
-            width: Theme.fit(104)
-            height: width
-            radius: Theme.radiusInner
-            color: Theme.meterTrack
-            border.width: Theme.borderWidth
-            border.color: Theme.stroke
+        Image {
+            id: art
+            // Media.artUrls in turn, the next when one fails to load
+            readonly property var urls: Media.artUrls(mediaFlyout.player)
+            property int attempt: 0
+            onUrlsChanged: attempt = 0
+            onStatusChanged: if (status === Image.Error && attempt < urls.length - 1) attempt++
+            anchors.fill: parent
+            source: urls[attempt] || ""
+            fillMode: Image.PreserveAspectCrop
+            // decoded at the frame's size, not the art's: a browser's
+            // video thumbnail can be several megapixels
+            sourceSize.width: artFrame.width * 2
+            asynchronous: true
+            visible: status === Image.Ready
+        }
 
-            Image {
-                id: art
-                // Media.artUrls in turn, the next when one fails to load
-                readonly property var urls: Media.artUrls(mediaFlyout.player)
-                property int attempt: 0
-                onUrlsChanged: attempt = 0
-                onStatusChanged: if (status === Image.Error && attempt < urls.length - 1) attempt++
-                anchors.fill: parent
-                source: urls[attempt] || ""
-                fillMode: Image.PreserveAspectCrop
-                // decoded at the frame's size, not the art's: a browser's
-                // video thumbnail can be several megapixels
-                sourceSize.width: artFrame.width * 2
-                asynchronous: true
-                visible: status === Image.Ready
+        Text {
+            anchors.centerIn: parent
+            visible: art.status !== Image.Ready
+            text: "󰝚"
+            color: Theme.muted
+            font.family: Theme.fontIcon
+            font.pixelSize: Theme.fontIconSize * 2
+        }
+
+        // the spectrum in the bar's style, rising from the art's foot over
+        // a fade, across its width; gone while silent
+        Rectangle {
+            visible: Settings.vizShown && Visualizer.playing
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: spectrum.bandH + Theme.spaceXl + Theme.spaceM
+            color: Theme.captionScrim
+            gradient: Theme.glass ? null : spectrumFade
+            property Gradient spectrumFade: Gradient {
+                GradientStop { position: 0; color: "transparent" }
+                GradientStop { position: 1; color: Theme.captionScrim }
             }
 
-            Text {
-                anchors.centerIn: parent
-                visible: art.status !== Image.Ready
-                text: "󰝚"
-                color: Theme.muted
-                font.family: Theme.fontIcon
-                font.pixelSize: Theme.fontIconSize * 2
+            // bands no wider than a fifth of their height, so four dots
+            // fit; spread so the row spans the art
+            Spectrum {
+                id: spectrum
+                anchors.left: parent.left
+                anchors.leftMargin: Theme.spaceM
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: Theme.spaceM
+                readonly property real span: parent.width - Theme.spaceM * 2
+                bandW: Math.min(Theme.fit(6), span / (Visualizer.barCount * 2))
+                bandH: Theme.fit(32)
+                spacing: Visualizer.barCount > 1 ? (span - bandW * Visualizer.barCount) / (Visualizer.barCount - 1) : 0
+                color: Theme.textStrong
             }
         }
 
-        // the track at the top, the transport at the foot
-        Item {
-            width: parent.width - artFrame.width - parent.spacing
-            height: artFrame.height
+        // with several players: the wheel flips between them, an arrow at
+        // each side and a dot each along the top (the shown one long)
+        MouseArea {
+            anchors.fill: parent
+            enabled: Media.sources.length > 1
+            acceptedButtons: Qt.NoButton
+            onWheel: wheel => mediaFlyout.flip(wheel.angleDelta.y > 0 ? -1 : 1)
+        }
 
-            Column {
-                width: parent.width
-                spacing: 1
+        Repeater {
+            model: Media.sources.length > 1 ? [-1, 1] : []
+
+            Rectangle {
+                required property int modelData
+                anchors.verticalCenter: parent.verticalCenter
+                x: modelData < 0 ? Theme.spaceM : artFrame.width - width - Theme.spaceM
+                width: Theme.controlSize
+                height: width
+                radius: width / 2
+                color: flipMouse.containsMouse ? Theme.base : Theme.captionScrim
 
                 Text {
-                    width: parent.width
-                    text: mediaFlyout.player ? (Media.titleOf(mediaFlyout.player) || "Nothing playing") : "No player open"
-                    elide: Text.ElideRight
+                    anchors.centerIn: parent
+                    text: parent.modelData < 0 ? "󰅁" : "󰅂"
                     color: Theme.textStrong
-                    font.family: Theme.fontText
-                    font.weight: Theme.weightStrong
-                    font.pixelSize: Theme.fontBody
+                    font.family: Theme.fontIcon
+                    font.pixelSize: Theme.fontIconSize
                 }
-                Text {
-                    width: parent.width
-                    visible: text !== ""
-                    text: mediaFlyout.player ? [Media.artistOf(mediaFlyout.player), mediaFlyout.player.identity]
-                        .filter(t => !!t).join(" · ") : ""
-                    elide: Text.ElideRight
-                    color: Theme.subtext
-                    font.family: Theme.fontText
-                    font.weight: Theme.weightBody
-                    font.pixelSize: Theme.fontSmall
+                MouseArea {
+                    id: flipMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: mediaFlyout.flip(parent.modelData)
                 }
-
             }
+        }
+
+        Rectangle {
+            visible: Media.sources.length > 1
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+            anchors.topMargin: Theme.spaceM
+            width: dots.width + Theme.spaceM * 2
+            height: dots.height + Theme.spaceS * 2
+            radius: height / 2
+            color: Theme.captionScrim
 
             Row {
-                visible: !!mediaFlyout.player
-                anchors.bottom: parent.bottom
+                id: dots
+                anchors.centerIn: parent
                 spacing: Theme.spaceS
 
-                FlyoutChip {
-                    width: Theme.fit(40)
-                    glyph: true
-                    text: "󰒮"
-                    enabled: Media.controllable(mediaFlyout.player) && mediaFlyout.player.canGoPrevious
-                    onClicked: mediaFlyout.player.previous()
-                }
-                FlyoutChip {
-                    width: Theme.fit(40)
-                    glyph: true
-                    text: Media.shownPlaying ? "󰏤" : "󰐊"
-                    enabled: Media.controllable(mediaFlyout.player) && mediaFlyout.player.canTogglePlaying
-                    onClicked: mediaFlyout.player.togglePlaying()
-                }
-                FlyoutChip {
-                    width: Theme.fit(40)
-                    glyph: true
-                    text: "󰒭"
-                    enabled: Media.controllable(mediaFlyout.player) && mediaFlyout.player.canGoNext
-                    onClicked: mediaFlyout.player.next()
+                Repeater {
+                    model: Media.sources.length > 1 ? Media.sources : []
+
+                    Rectangle {
+                        required property var modelData
+                        readonly property bool shown: Media.isShown(modelData)
+                        width: shown ? Theme.spaceL * 2 : Theme.spaceS * 2
+                        height: Theme.spaceS * 2
+                        radius: height / 2
+                        color: shown || dotMouse.containsMouse ? Theme.textStrong : Theme.muted
+                        Behavior on width { NumberAnimation { duration: Theme.durMedium } }
+
+                        MouseArea {
+                            id: dotMouse
+                            anchors.fill: parent
+                            anchors.margins: -Theme.spaceXs
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Media.pickSource(parent.modelData)
+                        }
+                    }
                 }
             }
+        }
+    }
+
+    // the track
+    Column {
+        width: parent.width
+        spacing: 1
+
+        Text {
+            width: parent.width
+            text: mediaFlyout.player ? (Media.titleOf(mediaFlyout.player) || "Nothing playing") : "No player open"
+            elide: Text.ElideRight
+            color: Theme.textStrong
+            font.family: Theme.fontText
+            font.weight: Theme.weightStrong
+            font.pixelSize: Theme.fontBody
+        }
+        Text {
+            width: parent.width
+            visible: text !== ""
+            text: mediaFlyout.player ? [Media.artistOf(mediaFlyout.player), mediaFlyout.player.identity]
+                .filter(t => !!t).join(" · ") : ""
+            elide: Text.ElideRight
+            color: Theme.subtext
+            font.family: Theme.fontText
+            font.weight: Theme.weightBody
+            font.pixelSize: Theme.fontSmall
         }
     }
 
@@ -188,6 +268,35 @@ FlyoutPanel {
             font.pixelSize: Theme.fontSmall
         }
     }
+
+    Row {
+        visible: !!mediaFlyout.player
+        anchors.horizontalCenter: parent.horizontalCenter
+        spacing: Theme.spaceL
+
+        FlyoutChip {
+            width: Theme.fit(56)
+            glyph: true
+            text: "󰒮"
+            enabled: Media.controllable(mediaFlyout.player) && mediaFlyout.player.canGoPrevious
+            onClicked: mediaFlyout.player.previous()
+        }
+        FlyoutChip {
+            width: Theme.fit(56)
+            glyph: true
+            text: Media.shownPlaying ? "󰏤" : "󰐊"
+            enabled: Media.controllable(mediaFlyout.player) && mediaFlyout.player.canTogglePlaying
+            onClicked: mediaFlyout.player.togglePlaying()
+        }
+        FlyoutChip {
+            width: Theme.fit(56)
+            glyph: true
+            text: "󰒭"
+            enabled: Media.controllable(mediaFlyout.player) && mediaFlyout.player.canGoNext
+            onClicked: mediaFlyout.player.next()
+        }
+    }
+
 
     // with several sources: a row each, the shown one marked; a click picks which the module follows
     function sourceLabel(src) {

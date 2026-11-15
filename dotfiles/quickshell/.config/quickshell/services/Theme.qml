@@ -333,6 +333,8 @@ Singleton {
     readonly property int headingHeight: Math.max(fs(16), fontHeadingSize + 2)
     // the faint surface a window's framed panels sit on (WindowPanel.qml)
     readonly property color panelTint: Qt.rgba(surface.r, surface.g, surface.b, 0.35)
+    // the scrim under a caption over an image
+    readonly property color captionScrim: Qt.rgba(base.r, base.g, base.b, 0.75)
     // the column an icon sits in at the start of a row
     readonly property int iconCell:      fs(20)
 

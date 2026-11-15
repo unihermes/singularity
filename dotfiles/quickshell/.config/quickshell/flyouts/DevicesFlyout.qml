@@ -1,7 +1,7 @@
 // DEVICES: one section, a row per device (its glyph and name, its level
 // as a meter and a number, red when it runs low). The phone's row comes
 // first with a Mirror button before its level (Stop while it's on screen), and
-// opens a tray under its label, an accent rail down from its icon: its actions as tiles
+// opens a tray under its label, an accent rail down from its icon: its actions as icons
 // (Screenshot over adb, which joins a phone on Wi-Fi just for it; Ring and Send file
 // through the phone link); the phone's notifications,
 // a click on one opening it in place as an opened history card: the
@@ -110,19 +110,16 @@ FlyoutPanel {
             width: parent.width - x
             spacing: Theme.flyoutSpacing
 
-            // the actions as tiles, up to three across
-            TileGrid {
+            // the actions as icons in a line
+            Row {
                 visible: root.trayOpen && root.actions.length > 0
-                columns: Math.max(1, Math.min(3, root.actions.length))
+                spacing: Theme.spaceL
                 Repeater {
                     model: root.trayOpen ? root.actions : []
-                    FlyoutTile {
+                    IconButton {
                         required property var modelData
-                        width: parent.cell
-                        centred: true
-                        clickable: true
-                        glyph: modelData.glyph
-                        title: modelData.text
+                        icon: modelData.glyph
+                        glyphSize: Theme.fontIconSize + Theme.spaceS
                         onClicked: root.phoneAct(modelData.act)
                     }
                 }

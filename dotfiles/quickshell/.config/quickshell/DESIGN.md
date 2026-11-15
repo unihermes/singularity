@@ -590,10 +590,10 @@ existed and stays:
 - **Windows:** Kill sits in a section of its own under the other actions.
 - **Clock:** a running timer stays on top as a row while another tab is open.
 - **Weather:** one page, no tabs (now, the forecast curve, tiles, the week); the
-  bar chip adds the chance of rain from 30%.
-- **Music:** the art as a square with the track and transport beside it; a row
-  per player when there are several; the options behind the heading's gear; a
-  thin progress line along the bar chip's foot.
+  bar chip stays icon and temperature, about as wide as Updates'.
+- **Music:** the art stays full width with the track, the timeline and the
+  transport below it; a row per player when there are several; the options
+  behind the heading's gear; a thin progress line along the bar chip's foot.
 - **Volume:** Output, Input and Apps tabs. The bar chip is unchanged.
 - **Network:** Wired (only while the cable is up, then first), Wi-Fi and Details
   tabs; the passphrase is asked under the network picked.
@@ -606,7 +606,7 @@ existed and stays:
 - **Updates:** Repositories, AUR, Singularity and Clean up as count tiles.
 - **Failed services:** a row says why a unit failed; Clear all is a danger chip.
 - **Drives:** a mounted volume shows how full it is.
-- **Devices:** the phone's actions as tiles; an accent dot on the bar chip while
+- **Devices:** the phone's actions as icons; an accent dot on the bar chip while
   the phone has notifications.
 - **Tray:** a dot on the drawer handle while a tucked-away icon asks for
   attention. Right-click keeps the app's own menu, with "Hide from the tray".
