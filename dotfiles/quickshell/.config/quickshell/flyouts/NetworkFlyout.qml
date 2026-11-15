@@ -1,7 +1,9 @@
 // The connection first, as a card: the cable when it's up, else the joined
-// network. Under it what's moving now, down and up, and the last minute of
-// it; then the five strongest other networks under WI-FI, with Rescan and
-// the radio switch on that heading, and the passphrase prompt. The state
+// network. Under it tabs: Wired (only while the cable is up, and then first: its traffic),
+// Wi-Fi (the five strongest other networks, with Rescan and the radio switch
+// on its heading, and the passphrase prompt opening under the network
+// picked) and Details (the connection's facts, what's moving now, down and
+// up, and the last minute of it). The state
 // and the iwctl calls live in services/Network.qml, the rates in
 // SystemStats (sampled while this is open).
 
@@ -18,55 +20,29 @@ FlyoutPanel {
 
     required property var bar
 
-    // "" when browsing the list; an SSID while its passphrase is
-    // being typed
+    // "" when none; an SSID while its passphrase is being typed
     property string pendingSsid: ""
-    readonly property bool browsing: pendingSsid === ""
+    // Wired only while the cable is up, then first; the tab picked, else the first
+    readonly property var tabs: (Network.wired ? [{ value: "wired", text: "Wired" }] : [])
+        .concat(Network.device !== "" ? [{ value: "wifi", text: "Wi-Fi" }] : [])
+        .concat([{ value: "details", text: "Details" }])
+    property string picked: ""
+    readonly property string tab: tabs.some(t => t.value === picked) ? picked : tabs[0].value
     // the joined network's own entry in the scan, for its security and bars
     readonly property var joined: Network.networks.find(n => n.connected) || null
     readonly property var others: Network.networks.filter(n => !n.connected)
-    onOpenChanged: if (!open) { pendingSsid = ""; pass.text = "" }
+    onOpenChanged: if (!open) { pendingSsid = ""; picked = "" }
 
     function connectTo(ssid, passphrase) {
         Network.connect(ssid, passphrase)
         pendingSsid = ""
-        pass.text = ""
         // stays open so the row can show it connecting
     }
 
     FlyoutHeading {
-        text: netFlyout.browsing ? "NETWORK" : "PASSPHRASE"
-        settingsIcon: netFlyout.browsing
+        text: "NETWORK"
+        settingsIcon: true
         onSettingsClicked: scope.openSettings("network")
-    }
-
-    // --- passphrase prompt ---
-    FlyoutRow {
-        visible: !netFlyout.browsing
-        label: netFlyout.pendingSsid
-        enabled: false
-    }
-
-    FlyoutInput {
-        id: pass
-        bleed: true
-        visible: !netFlyout.browsing
-        placeholder: "passphrase"
-        onAccepted: netFlyout.connectTo(netFlyout.pendingSsid, text)
-        onEscapePressed: { netFlyout.pendingSsid = ""; text = "" }
-    }
-
-    FlyoutRow {
-        visible: !netFlyout.browsing
-        label: "Connect"
-        trailing: ""
-        onActivated: netFlyout.connectTo(netFlyout.pendingSsid, pass.text)
-    }
-
-    FlyoutRow {
-        visible: !netFlyout.browsing
-        label: "Cancel"
-        onActivated: { netFlyout.pendingSsid = ""; pass.text = "" }
     }
 
     // --- the connection ---
@@ -74,7 +50,6 @@ FlyoutPanel {
     // details in Settings), else the joined network or why there isn't one,
     // Disconnect while pointed at
     Item {
-        visible: netFlyout.browsing
         width: parent ? parent.width : 0
         implicitHeight: card.implicitHeight
 
@@ -116,9 +91,39 @@ FlyoutPanel {
         HoverHandler { id: cardHover }
     }
 
-    // what's moving now, and the last minute of it
+    FlyoutSegmented {
+        model: netFlyout.tabs
+        current: netFlyout.tab
+        onPicked: v => netFlyout.picked = v
+    }
+
+    // --- Wired: its traffic below (shared with Details), and a way to its settings ---
+    FlyoutRow {
+        visible: netFlyout.tab === "wired"
+        label: "Network settings"
+        trailing: "󰁔"
+        onActivated: scope.openSettings("network")
+    }
+
+    // --- Details: what's moving now, and the last minute of it ---
+    FlyoutRow {
+        visible: netFlyout.tab === "details" && !!netFlyout.joined && Network.ssid !== ""
+        leadingIcon: "󰖩"
+        label: "Wi-Fi"
+        trailing: Network.ssid
+        trailingIsValue: true
+        enabled: false
+    }
+    FlyoutRow {
+        visible: netFlyout.tab === "details" && SystemStats.ipAddr !== ""
+        leadingIcon: "󰩟"
+        label: "Address"
+        trailing: SystemStats.ipAddr
+        trailingIsValue: true
+        enabled: false
+    }
     TileGrid {
-        visible: netFlyout.browsing && (Network.wired || Network.ssid !== "")
+        visible: (netFlyout.tab === "details" || netFlyout.tab === "wired") && (Network.wired || Network.ssid !== "")
         columns: 2
         FlyoutTile {
             width: parent.cell
@@ -137,7 +142,7 @@ FlyoutPanel {
     }
 
     Spark {
-        visible: netFlyout.browsing && SystemStats.rxHistory.length > 1
+        visible: (netFlyout.tab === "details" || netFlyout.tab === "wired") && SystemStats.rxHistory.length > 1
         height: Theme.row(40)
         readonly property real peak: Math.max(65536,
             Math.max.apply(null, SystemStats.rxHistory.concat(SystemStats.txHistory, [0])))
@@ -150,7 +155,7 @@ FlyoutPanel {
 
     // --- the others ---
     FlyoutHeading {
-        visible: netFlyout.browsing && Network.device !== ""
+        visible: netFlyout.tab === "wifi"
         text: "WI-FI" + (Network.powered && netFlyout.others.length > 0 ? "  " + netFlyout.others.length : "")
         control: headingControls
     }
@@ -175,34 +180,67 @@ FlyoutPanel {
         }
     }
 
+    // the joined network, when the cable's card is the one on top
+    FlyoutRow {
+        visible: netFlyout.tab === "wifi" && Network.powered && Network.wired && Network.ssid !== ""
+        label: Network.ssid
+        highlighted: true
+        trailing: "connected"
+        trailingIsValue: true
+        onActivated: Network.disconnect()
+    }
+
     Repeater {
         // iwctl already orders by signal, so these are the five strongest
-        model: netFlyout.browsing && Network.powered ? netFlyout.others.slice(0, 5) : []
+        model: netFlyout.tab === "wifi" && Network.powered ? netFlyout.others.slice(0, 5) : []
 
-        FlyoutRow {
+        Column {
+            id: net
             required property var modelData
-            label: modelData.ssid
             readonly property bool connecting: Network.connecting === modelData.ssid
-            busy: connecting
-            trailing: connecting ? "connecting"
-                : Network.failedSsid === modelData.ssid ? "failed" : ""
-            // the lock marks the ones that will ask for a passphrase rather
-            // than connecting straight away
-            trailingIcons: [
-                !modelData.known && modelData.security !== "open" ? "󰌾" : "",
-                Network.strengthGlyphs[Math.max(1, modelData.bars) - 1]
-            ]
-            onActivated: {
-                if (connecting) return
-                // a known or open network needs no passphrase: iwd
-                // either has the key already or there is none
-                if (modelData.known || modelData.security === "open") {
-                    netFlyout.connectTo(modelData.ssid, "")
-                } else {
-                    netFlyout.pendingSsid = modelData.ssid
-                    pass.text = ""
-                    pass.forceFocus()
+            readonly property bool prompting: netFlyout.pendingSsid === modelData.ssid
+            width: parent ? parent.width : 0
+            spacing: Theme.flyoutSpacing
+            onPromptingChanged: if (prompting) pass.forceFocus(); else pass.text = ""
+
+            FlyoutRow {
+                width: parent.width
+                label: net.modelData.ssid
+                busy: net.connecting
+                trailing: net.connecting ? "connecting"
+                    : Network.failedSsid === net.modelData.ssid ? "failed" : ""
+                // the lock marks the ones that will ask for a passphrase rather
+                // than connecting straight away
+                trailingIcons: [
+                    !net.modelData.known && net.modelData.security !== "open" ? "󰌾" : "",
+                    Network.strengthGlyphs[Math.max(1, net.modelData.bars) - 1]
+                ]
+                onActivated: {
+                    if (net.connecting) return
+                    // a known or open network needs no passphrase: iwd
+                    // either has the key already or there is none
+                    if (net.modelData.known || net.modelData.security === "open") {
+                        netFlyout.connectTo(net.modelData.ssid, "")
+                    } else {
+                        netFlyout.pendingSsid = net.prompting ? "" : net.modelData.ssid
+                    }
                 }
+            }
+
+            // the passphrase, under the network it's for
+            FlyoutInput {
+                id: pass
+                width: parent.width
+                visible: net.prompting
+                placeholder: "passphrase"
+                onAccepted: netFlyout.connectTo(net.modelData.ssid, text)
+                onEscapePressed: netFlyout.pendingSsid = ""
+            }
+            FlyoutChipLine {
+                visible: net.prompting
+                chips: [{ icon: "󰄬", text: "Connect", act: "connect" }, { icon: "󰅖", text: "Cancel", act: "cancel" }]
+                onPicked: act => act === "connect" ? netFlyout.connectTo(net.modelData.ssid, pass.text)
+                                                   : netFlyout.pendingSsid = ""
             }
         }
     }
@@ -211,14 +249,13 @@ FlyoutPanel {
         label: Network.listError !== "" ? Network.listError
             : Network.scanning ? "Looking for networks…" : "No other networks"
         enabled: false
-        visible: netFlyout.browsing && Network.powered && Network.device !== ""
-            && netFlyout.others.length === 0
+        visible: netFlyout.tab === "wifi" && Network.powered && netFlyout.others.length === 0
     }
 
     FlyoutRow {
         label: "Show all " + netFlyout.others.length
         trailing: "󰁔"
-        visible: netFlyout.browsing && Network.powered && netFlyout.others.length > 5
+        visible: netFlyout.tab === "wifi" && Network.powered && netFlyout.others.length > 5
         onActivated: scope.openSettings("network")
     }
 
