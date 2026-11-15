@@ -112,10 +112,13 @@ comparison tables below describe the original five styles.
 - Hover and open states of bare chips (Glass, the taskbar) are washes of the
   foreground (`Theme.washHover`, `washActive`), never the opaque overlay grey,
   and level fills are opaque for Glass and softened to 45% for taskbars; the open
-  Glass chip has no accent ring. Glass level chips are wider than the status
-  icons, with a rounded frosted track and a translucent foreground-coloured fill;
-  charging and low-battery colours take precedence,
-  and the fill's width follows the level even near zero. Glass meters and sliders
+  Glass chip has no accent ring. Glass level chips (picked 2026-11-15) are
+  wider than the status icons: a centred icon and the percent over a well sunk
+  2px inside the chip (dark wash, faint 1px rim), filled with the level colour
+  as tinted glass (62%, 70% for charging and low battery) with a light top and
+  dark bottom sheen. The fill's width follows the level even near zero. While
+  the chip's flyout is open the well and fill fade out and the tab is plain
+  frost; the flyout carries the level. Open chips never change width. Glass meters and sliders
   use the same outlined track and preserve its rounded end as the fill changes.
   A display scaled under 1 can't blur (looks.lua), so the bar and Dock there use
   an `unblurred-` namespace and lift their ground (`Theme.unfrosted`).
@@ -346,9 +349,11 @@ Style: `channel` (frame `channel` in `Styles.js`).
   for instance). It only fades in, since its frame is joined to the bar.
 - **Glass tab** (reworked 2026-11-15): a bar module's flyout is one frosted
   surface that grows straight out of the bar like a tab. It sits flush under
-  the bar and runs into its edge on a concave flare at each top corner (the
-  panel's radius, at least `channelFillet`), like the channel connectors; a
-  side that touches the screen edge has no flare and no gap. It is centred on its
+  the bar with the panel's radius on every corner, except a top corner at a
+  screen edge, which is square so no gap opens. On a full-width bar the open
+  module's chip draws nothing and the outline runs up round it (a neck with the
+  chip's rounded top, joined to the body on concave rounded connectors, none at
+  a screen edge), so chip and body are one frosted shape. It is centred on its
   module, clamped to the screen edge. The outline is stroked everywhere but along the bar. The
   panel scales from the module's edge. Bottom bars mirror the shape upward.
   Fade and None still follow the Motion setting. Plain keeps its flush frame,

@@ -21,6 +21,9 @@ Item {
 
     // lit state: brighter strokes and a filled ground
     property bool active: false
+    // false for chips whose open state is no flyout (a sidebar), which keep
+    // their own lit ground under Glass rather than becoming a tab
+    property bool tabbable: true
     property int spacing: Theme.sp(5)
     // per-chip override, for the ones that look cramped at the shared value
     property int padH: Theme.modulePadH
@@ -71,8 +74,10 @@ Item {
         readonly property bool track: root.gauge
         // filled with the accent while open (Solid, Glass);
         // a level chip keeps its fill and takes an accent ring instead
-        readonly property bool openFill: Theme.moduleOpenFill && root.active && !root.gauge
-        readonly property bool openRing: root.active && !Theme.washed && (flush || (Theme.moduleOpenFill && root.gauge))
+        // an open Glass tab: the flyout's frosted ground carries the chip
+        readonly property bool tabbed: Theme.glassTab && root.active && root.tabbable
+        readonly property bool openFill: Theme.moduleOpenFill && root.active && !root.gauge && !tabbed
+        readonly property bool openRing: root.active && !tabbed && !Theme.washed && (flush || (Theme.moduleOpenFill && root.gauge))
         // what a bare chip's hover and open states fill with
         readonly property color wash: root.active ? Theme.washActive : hover.hovered ? Theme.washHover : "transparent"
         // a solid chip's own ground: Glass's is a faint frost, and Solid's
@@ -83,14 +88,16 @@ Item {
 
         height: grouped ? Theme.groupHeight - Theme.channelWidth * 2 : Theme.moduleHeight
         radius: Theme.radius
-        readonly property color ground: flush ? (Theme.washed ? wash : root.active || hover.hovered ? Theme.overlay : "transparent")
+        // Glass's level chip is its well alone (the track below)
+        readonly property bool glassWell: Theme.glass && root.gauge
+        readonly property color ground: tabbed || glassWell ? "transparent" : flush ? (Theme.washed ? wash : root.active || hover.hovered ? Theme.overlay : "transparent")
             : openFill ? (Theme.glass ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.7) : Theme.accent)
             : root.hovered ? (Theme.glass ? Theme.stroke : Theme.overlay)
             : root.active ? Theme.selectedFill
             : solid ? restFill : "transparent"
 
         color: Theme.frameCustom && !flush ? "transparent" : ground
-        border.width: !Theme.frameCustom && style === "outline" && Theme.frameStroked ? Theme.borderWidth : 0
+        border.width: !tabbed && !Theme.frameCustom && style === "outline" && Theme.frameStroked ? Theme.borderWidth : 0
         border.color: root.active ? Theme.strokeFocus : Theme.stroke
 
         Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
@@ -110,7 +117,7 @@ Item {
 
         // Glass's glow, round the open chip
         RectangularShadow {
-            visible: Theme.glow && root.active && !frame.flush
+            visible: Theme.glow && root.active && !frame.flush && !frame.tabbed
             anchors.fill: parent
             z: -1
             radius: frame.radius
@@ -121,7 +128,7 @@ Item {
         // Keep the inner stroke above content fills, including end slots.
         Rectangle {
             anchors.fill: parent
-            visible: Theme.frameDouble && frame.style === "outline"
+            visible: Theme.frameDouble && frame.style === "outline" && !frame.tabbed
             z: 1
             anchors.margins: 2
             radius: Theme.radiusInner
@@ -140,14 +147,17 @@ Item {
             id: track
             visible: frame.track
             anchors.fill: parent
-            anchors.margins: frame.barInset
+            // Glass: a well sunk 2px inside the chip
+            anchors.margins: Theme.glass ? 2 : frame.barInset
         // one less than the inner stroke's radius, concentric, floored at 0
             radius: Theme.glass ? Theme.pill(height) : frame.flush ? frame.radius : Theme.radiusSmall
-            color: Theme.glass && frame.flush && !root.active && !hover.hovered ? frame.restFill
+            color: Theme.glass ? (frame.tabbed ? "transparent" : hover.hovered ? Theme.washHover
+                    : Theme.isLight ? Qt.rgba(0, 0, 0, 0.08) : Qt.rgba(0, 0, 0, 0.16))
                 : frame.flush || frame.taskbar ? (Theme.washed ? frame.wash : root.active || hover.hovered ? Theme.overlay : "transparent")
                 : Theme.meterTrack
-            border.width: Theme.glass ? 1 : 0
-            border.color: Theme.stroke
+            // an open Glass tab's outline is the flyout's
+            border.width: Theme.glass && !frame.tabbed ? 1 : 0
+            border.color: Theme.glass ? (Theme.isLight ? Qt.rgba(0, 0, 0, 0.10) : Qt.rgba(1, 1, 1, 0.10)) : Theme.stroke
 
             Rectangle {
                 visible: !Theme.glass
@@ -175,7 +185,13 @@ Item {
                 visible: Theme.glass
                 fraction: root.fillValue
                 corner: track.radius
-                fillColor: Qt.alpha(root.fillColor, 0.28)
+                // the level colour as tinted glass with a sheen; a warning
+                // or charging colour a little stronger. An open tab is plain
+                // frost: its flyout carries the level.
+                fillColor: Qt.alpha(root.fillColor, Qt.colorEqual(root.fillColor, Theme.gaugeFill) ? 0.62 : 0.7)
+                sheen: true
+                opacity: frame.tabbed ? 0 : 1
+                Behavior on opacity { NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
             }
         }
 
@@ -204,7 +220,7 @@ Item {
         Row {
             id: contentRow
             anchors.verticalCenter: parent.verticalCenter
-            x: frame.track && !frame.flush && !frame.taskbar ? root.padH : Math.round((parent.width - width) / 2)
+            x: frame.track && !frame.flush && !frame.taskbar && !Theme.glass ? root.padH : Math.round((parent.width - width) / 2)
             spacing: root.spacing
         }
     }

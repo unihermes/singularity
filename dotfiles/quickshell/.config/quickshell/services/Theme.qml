@@ -138,7 +138,8 @@ Singleton {
     readonly property color barTone: glass ? glassTone(bar) : bar
     readonly property color panelTone: glass ? glassTone(panel) : panel
     readonly property color panelFill:     Qt.rgba(panelTone.r, panelTone.g, panelTone.b, panelOpacity)
-    readonly property color flyoutFill: glass ? panelFill : Qt.rgba(surface.r, surface.g, surface.b, panelOpacity)
+    // flyouts share the bar's ground, tone and opacity, so they read as one frosted material
+    readonly property color flyoutFill: Qt.rgba(barTone.r, barTone.g, barTone.b, barOpacity * (glass ? 0.94 : 1))
     // Inner groups are a light wash over the frost, rather than another
     // opaque panel obscuring the wallpaper and the optional accent tint.
     readonly property color sectionFill: glass ? (isLight ? Qt.rgba(0, 0, 0, 0.05) : Qt.rgba(1, 1, 1, 0.07)) : panelFill
@@ -371,6 +372,9 @@ Singleton {
     readonly property bool barFloating: Settings.barStyle === "floating" && !barPlain
     readonly property bool barIslands:  Settings.barStyle === "islands" && !barPlain
     readonly property bool barFull:     !barFloating && !barIslands
+    // Glass on a full-width bar: an open module's chip is the flyout's own
+    // ground, running down into it (the chip draws nothing; the flyout outlines the neck)
+    readonly property bool glassTab:    glass && !plain && barFull
     readonly property int barMargin:  barFull ? 0 : Settings.edgeGap
     readonly property int barExtent:  barHeight + barMargin * 2
     // between the bar's (or an island's) edge and its outermost module
@@ -492,7 +496,7 @@ Singleton {
     readonly property int moduleGap:    resolved.moduleGap
     // the gauge modules' shared width, so their fills compare
     readonly property int moduleWidth:  glass ? 40 : 54
-    readonly property int levelChipWidth: glass && !plain ? sp(64) : moduleWidth
+    readonly property int levelChipWidth: glass && !plain ? sp(84) : moduleWidth
     // the taskbar's Start, search and Task View buttons, square
     readonly property int buttonWidth:  moduleTaskbar ? moduleHeight : glass ? moduleHeight + modulePadH * 2 : moduleWidth
     // the space inside the chip's frame, capped to it

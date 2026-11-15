@@ -11,6 +11,8 @@ Item {
     property string label: ""
     // highlights the module while its flyout is open
     property bool active: false
+    // false when the open state is a sidebar, not a flyout (ModuleFrame)
+    property bool tabbable: true
     // dims the icon when the thing it represents is off/absent
     property bool dimmed: false
     property bool acceptWheel: false
@@ -62,10 +64,11 @@ Item {
     signal rightClicked()
     signal wheeled(int delta)
 
+    // Glass's level chips: the percent beside a centred icon
+    readonly property bool glassLevel: Theme.glass && !Theme.plain && fillValue >= 0
     // Gauge icons are always bright: they sit on top of the fill, and the
     // fill sweeps under them, so anything dimmer loses contrast as it passes.
-    readonly property color glassLevelFill: Qt.colorEqual(fillColor, Theme.gaugeFill) ? Theme.textStrong : fillColor
-    readonly property color fg: active && fillValue < 0 && Theme.moduleOpenFill ? Theme.textOnAccent
+    readonly property color fg: active && fillValue < 0 && Theme.moduleOpenFill && !(Theme.glassTab && tabbable) ? Theme.textOnAccent
         : (active || fillValue >= 0)
         ? Theme.textStrong
         : (dimmed ? Theme.textDisabled : Theme.text)
@@ -78,9 +81,10 @@ Item {
         id: frame
         anchors.centerIn: parent
         active: root.active
+        tabbable: root.tabbable
         padH: root.padH
         fillValue: root.levelText ? -1 : root.fillValue
-        fillColor: Theme.glass && !root.levelText ? root.glassLevelFill : root.fillColor
+        fillColor: root.fillColor
         fixedWidth: root.levelText ? 0 : root.fixedWidth
 
         Text {
@@ -146,14 +150,14 @@ Item {
             // digits don't sit high
             anchors.verticalCenterOffset: root.stacked ? 0 : root.inkNudge(labelInk)
             visible: text !== ""
-            text: root.levelText ? Math.round(root.fillValue * 100) + "%" : root.label
+            text: root.levelText || root.glassLevel ? Math.round(root.fillValue * 100) + "%" : root.label
             width: root.labelMaxWidth > 0 ? Math.min(implicitWidth, root.labelMaxWidth) : implicitWidth
             elide: Text.ElideRight
             // a level's warning colour (a low battery) carries into its text
             color: root.levelText && !Qt.colorEqual(root.fillColor, Theme.gaugeFill) ? root.fillColor : root.fg
             font.family: Theme.fontText
             font.pixelSize: root.stacked ? Theme.stackLabelSize : Theme.barLabelSize
-            font.weight: root.labelBold ? Theme.weightStrong : Theme.weightBody
+            font.weight: root.labelBold || root.glassLevel ? Theme.weightStrong : Theme.weightBody
             horizontalAlignment: Text.AlignHCenter
             lineHeight: root.stacked ? 0.95 : 1
         }

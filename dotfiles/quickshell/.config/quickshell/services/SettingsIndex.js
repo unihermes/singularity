@@ -8,11 +8,11 @@
 
 var entries = [
     // --- Network -----------------------------------------------------------
-    { page: "network", section: "Links", label: "Links",       keywords: "status wifi wi-fi wireless radio power iwd on off ssid connected joined in use ethernet wired cable lan networkd" },
+    { page: "network", section: "Links", label: "Links",       keywords: "status wifi wi-fi wireless radio power iwd on off ssid connected joined in use" },
     { page: "network", section: "Links", label: "Interface",  keywords: "device wlan adapter" },
     { page: "network", section: "Links", label: "IP address", keywords: "ipv4 dhcp address copy" },
     { page: "network", section: "Links", label: "Gateway",    keywords: "router default route copy" },
-    { page: "network", section: "Links", label: "MAC",        keywords: "hardware address ethernet copy" },
+    { page: "network", section: "Links", label: "MAC",        keywords: "hardware address copy" },
     { page: "network", section: "Links", label: "Speed",      keywords: "bitrate link rate mbit" },
     { page: "network", section: "Links", label: "Signal",     keywords: "strength dbm rssi" },
     { page: "network", section: "Links", label: "Band",       keywords: "frequency ghz 2.4 5 6 channel" },
@@ -156,6 +156,7 @@ var entries = [
     { page: "appearance", section: "Type", label: "Heading size", keywords: "headings titles larger smaller font" },
     { page: "appearance", section: "Type", label: "System font", keywords: "typeface family gtk qt apps interface ui" },
     { page: "appearance", section: "Type", label: "Icons", keywords: "icon theme kora apps gtk qt" },
+    { page: "appearance", section: "Type", label: "Shell icons", keywords: "icon theme restart shell bar quickshell" },
     { page: "appearance", section: "Type", label: "Cursor", keywords: "pointer mouse theme bibata size px big" },
 
     { page: "appearance", section: "Bar", label: "Position", keywords: "bar top bottom edge" },

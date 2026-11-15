@@ -145,7 +145,9 @@ SettingsTab {
 
     SettingsField {
         label: "Icons"
-        hint: "GTK now, Qt when next opened"
+        hint: Settings.iconTheme !== Quickshell.env("QS_ICON_THEME")
+            ? "GTK now, Qt apps when next opened; the shell after a restart"
+            : "GTK now, Qt when next opened"
 
         // a few apps' icons from the theme picked here
         labelExtras: Repeater {
@@ -169,6 +171,19 @@ SettingsTab {
         }
 
         Component.onCompleted: DesktopThemes.refreshPreview()
+    }
+
+    // The shell's own icons use the theme it started with (QS_ICON_THEME)
+    SettingsField {
+        visible: Settings.iconTheme !== Quickshell.env("QS_ICON_THEME")
+        label: "Shell icons"
+        hint: "Still " + DesktopThemes.label(Quickshell.env("QS_ICON_THEME")) + " until the shell restarts"
+
+        FlyoutChip {
+            anchors.right: parent.right
+            text: "Restart shell"
+            onClicked: Session.restartShell()
+        }
     }
 
     // the theme and its size on one row

@@ -22,7 +22,8 @@ OverlayWindow {
     // screen-local x (relative to this panel, which spans the whole
     // screen) that the box centres itself under
     readonly property real anchorX: glassAttached
-        ? sourceItem.mapToItem(null, sourceItem.width / 2, 0).x : scope.flyoutAnchorX
+        ? (sourceItem.x + sourceItem.parent.x, sourceItem.mapToItem(null, sourceItem.width / 2, 0).x)
+        : scope.flyoutAnchorX
     // backdrop click, and content that wants to dismiss the flyout
     function requestClose() { scope.openFlyout = "" }
 
@@ -232,8 +233,18 @@ OverlayWindow {
             opacity: Theme.flyoutAnim === "none" ? 1 : root.reveal
             // Glass grows about the source, including its neck. Other styles
             // scale from the bar-side midpoint; grown channels only fade.
-            readonly property var attachment: GlassFlyout.attachment(width, height,
-                x, root.width, root.anchorX - x, radius, Math.max(radius, Theme.channelFillet), root.atBottom)
+            readonly property var attachment: GlassFlyout.attachment(width, height, x, root.width, root.anchorX - x, radius, root.atBottom,
+                Theme.glassTab && root.glassAttached ? neckRect : null, Theme.sp(6))
+            // the open module's chip in this box's coordinates: its span, its
+            // top edge up in the bar, and its corner radius
+            readonly property var neckRect: {
+                if (!root.glassAttached) return null
+                // read so the neck follows the chip as it widens or slides
+                void (root.sourceItem.x + root.sourceItem.width + root.sourceItem.parent.x)
+                var x0 = root.sourceItem.mapToItem(null, 0, 0).x - x
+                return { x0: x0, x1: x0 + root.sourceItem.width,
+                         top: -(root.topOffset + Theme.moduleHeight) / 2, radius: Theme.radius }
+            }
             readonly property bool flowMotion: root.glassAttached
                 && (Theme.flyoutAnim === "scale" || Theme.flyoutAnim === "drop")
             transform: [

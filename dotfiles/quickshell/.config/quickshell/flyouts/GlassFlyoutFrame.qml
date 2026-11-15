@@ -1,5 +1,5 @@
-// One frosted surface: the flyout body, running into the bar's edge on
-// concave flares, with the outline stroked everywhere but along the bar.
+// One frosted surface: the flyout body, square against the bar's edge and
+// rounded on the far side, with the outline stroked everywhere but along the bar.
 import QtQuick
 import QtQuick.Shapes
 import "../services"

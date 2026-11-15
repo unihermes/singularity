@@ -260,21 +260,29 @@ test("ChannelPath snaps near edges and closes its outline", () => {
     assert.doesNotMatch(d, /NaN/)
 })
 
-test("Glass tabs flare into the bar except at a screen edge", () => {
+test("Glass tabs: rounded body, rounded neck and connectors, square at a screen edge", () => {
     const G = load("GlassFlyout.js")
-    const mid = G.attachment(360, 240, 100, 1920, 30, 18, 18, false)
-    assert.equal(mid.flareLeft, 18)
-    assert.equal(mid.flareRight, 18)
+    const neck = { x0: 150, x1: 190, top: -20, radius: 8 }
+    const mid = G.attachment(360, 240, 100, 1920, 130, 18, false, neck)
     assert.equal(mid.originY, 0)
-    const edge = G.attachment(360, 240, 0, 360, 30, 18, 18, true)
-    assert.equal(edge.flareLeft, 0)
-    assert.equal(edge.flareRight, 0)
+    assert.equal(mid.cornerLeft, 18)
+    assert.equal(mid.cornerRight, 18)
+    assert.equal(mid.neck.flareLeft, 18)
+    assert.equal(mid.neck.radius, 8)
+    const edge = G.attachment(360, 240, 0, 1920, 30, 18, true, { x0: 0, x1: 40, top: -20, radius: 8 })
+    assert.equal(edge.cornerLeft, 0)
     assert.equal(edge.originY, 240)
-    for (const a of [mid, edge]) {
-        for (const closed of [true, false]) assert.doesNotMatch(G.path(a, closed), /NaN|Infinity/)
+    assert.equal(edge.neck.flareLeft, 0)
+    const far = G.attachment(360, 240, 1560, 1920, 330, 18, false, { x0: 320, x1: 360, top: -20, radius: 8 })
+    assert.equal(far.cornerRight, 0)
+    assert.equal(far.neck.flareRight, 0)
+    for (const a of [mid, edge, far, G.attachment(360, 240, 100, 1920, 130, 18, false, null)]) {
+        for (const closed of [true, false]) assert.doesNotMatch(G.path(a, closed), /NaN|Infinity|undefined/)
         assert.match(G.path(a, true), / Z$/)
+        assert.match(G.path(a, false), / Z$/)
     }
-    assert.equal(G.attachment(40, 20, 0, 400, 20, 18, 7, false).radius, 10)
+    assert.match(G.path(mid, false), /^M150 -12 /)
+    assert.equal(G.attachment(40, 20, 0, 400, 20, 18, false, null).radius, 10)
 })
 
 test("HyprTables reads hl.config fields", () => {

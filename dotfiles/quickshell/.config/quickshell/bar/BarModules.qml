@@ -184,6 +184,7 @@ Item {
         icon: "󰕮"
         fixedWidth: Theme.buttonWidth
         active: screenScope.openFlyout === "workspaceoverlay"
+        tabbable: false
         onActivated: barModules.shellRoot.workspaceOverlayToggled()
     }
 
@@ -424,6 +425,7 @@ Item {
         badge: Notifications.unread
         dimmed: Notifications.dnd || Notifications.unread === 0
         active: Notifications.shown && Notifications.screen === screenScope.modelData
+        tabbable: false
         // left: the history; right: Do Not Disturb
         onActivated: Notifications.toggle(screenScope.modelData)
         onRightClicked: Notifications.toggleDnd()
@@ -462,6 +464,7 @@ Item {
         label: Ai.busy && !Ai.asking ? spinner.frames[spinner.frame] : ""
         iconColor: Ai.asking || (Ai.unseen && !Ai.shown) ? Theme.accent : "transparent"
         active: Ai.shown && Ai.screen === screenScope.modelData
+        tabbable: false
         onActivated: Ai.toggle(screenScope.modelData)
 
         Timer {

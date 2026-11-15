@@ -61,7 +61,7 @@ FlyoutPanel {
                 : Network.powered ? "󰤮" : "󰤭"
             glyphColor: cable || Network.ssid !== "" ? Theme.textStrong : Theme.muted
             title: cable ? "Wired"
-                : Network.device === "" ? (Network.wiredDevice !== "" ? "Cable unplugged" : "No network device")
+                : Network.device === "" ? "No network device"
                 : !Network.powered ? "Wi-Fi is off"
                 : Network.ssid !== "" ? Network.ssid
                 : "Not connected"

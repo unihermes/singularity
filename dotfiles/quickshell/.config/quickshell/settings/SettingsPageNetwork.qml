@@ -225,18 +225,15 @@ SettingsPage {
         }
     }
 
-    // the cable, on a machine with a port: only its state, as networkd
+    // the cable, only while it's up: its state, as networkd
     // configures it by itself and there is nothing here to switch
     LinkRow {
-        visible: Network.wiredDevice !== ""
+        visible: Network.wired
         kind: "wired"
         glyph: "󰛳"
         name: "Ethernet"
-        dim: !Network.wired
-        inUse: Network.wired
-        detail: Network.wired ? "Connected  ·  " + Network.wiredDevice
-            : Network.wiredState === "no-carrier" || Network.wiredState === "off" ? "Unplugged"
-            : "No address yet"
+        inUse: true
+        detail: "Connected  ·  " + Network.wiredDevice
     }
 
     // the joined network: its strength, name and kind, and the radio

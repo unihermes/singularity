@@ -142,8 +142,9 @@ Column {
                 spacing: Theme.spaceS
         FlyoutHeading { text: "CONNECTIONS" }
         FlyoutRow {
+            visible: Network.wired
             label: "Ethernet"
-            trailing: Network.wired ? "Connected" : Network.wiredDevice !== "" ? "Cable unplugged" : "No adapter"
+            trailing: "Connected"
             enabled: false
         }
         ControlRow {
@@ -163,11 +164,6 @@ Column {
                 busy: Vpn.busy && Settings.vpnServer === modelData.id
                 onActivated: if (!(Vpn.up && Vpn.upServer === modelData.id)) Vpn.connect(modelData.id)
             }
-        }
-        ControlRow {
-            icon: "󰀝"; title: "Airplane"; caption: root.cc.airplane ? "Radios off" : "Off"
-            checked: root.cc.airplane
-            onClicked: root.cc.setAirplane(!root.cc.airplane)
         }
         FlyoutChip { text: "Network settings  󰁔"; onClicked: root.cc.scope.openSettings("network") }
             }

@@ -25,9 +25,11 @@ Singleton {
     // a fresh process (Restart shell, and how Qt rereads fonts), started by
     // Hyprland so it gets Hyprland's environment, not this one's. The tray's
     // watcher runs apart (tray-watcher.py), so apps don't see the tray go.
+    // QS_ICON_THEME is read from the state file: Hyprland's copy is from login.
     function restartShell() {
         Quickshell.execDetached(["hyprctl", "dispatch",
-            "hl.dsp.exec_cmd(\"qs kill; sleep 0.5; exec quickshell > ~/.cache/quickshell.log 2>&1\")"])
+            "hl.dsp.exec_cmd(\"qs kill; sleep 0.5; exec env QS_ICON_THEME=$(cat " + Settings.stateDir
+            + "/icons) quickshell > ~/.cache/quickshell.log 2>&1\")"])
     }
 
     Process {
