@@ -59,6 +59,7 @@ Use `--largest` on a directory to rank its files recursively by size.
 
 - `docs/CHECKS.md`: every check/test command. The pre-commit hook runs the relevant ones; run `python3 tools/check-syntax.py` plus the check for what you touched.
 - `docs/HARDWARE.md`: laptop/desktop profiles, `has`/`feature`/`Platform.has()` gating. Read before touching device or policy code.
+- `docs/MOCKUPS.md`: how UI mockups are made and picks become code (template in `docs/mockups/template.html`). Read before proposing UI changes.
 - `docs/STATE-MIGRATION.md`: XDG state/cache paths and migration. Read before changing `Paths.qml` or state locations.
 
 ## Running and testing
