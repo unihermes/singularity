@@ -273,6 +273,49 @@ end
 local function resetWorkspacesSoon()
     hl.timer(function() singularityResetWorkspaces() end, { timeout = 500, type = "oneshot" })
 end
+-- A display plugged in live comes after the ones already there, in the
+-- workspace order they have now, whatever the order they were first seen in.
+-- Not while Hyprland is still starting up, when they all arrive together.
+local settled = false
+hl.timer(function() settled = true end, { timeout = 5000, type = "oneshot" })
+
+local function numberNewcomersLast(before)
+    local isBefore = {}
+    for _, n in ipairs(before) do isBefore[n] = true end
+    local kept, others = {}, {}
+    for _, m in ipairs(hl.get_monitors()) do
+        local list = isBefore[m.name] and kept or others
+        list[#list + 1] = m
+    end
+    table.sort(kept, function(a, b)
+        local wa, wb = a.active_workspace and a.active_workspace.id or 1e9, b.active_workspace and b.active_workspace.id or 1e9
+        return wa < wb
+    end)
+    table.sort(others, function(a, b) return a.x < b.x or (a.x == b.x and a.y < b.y) end)
+    local order, seen = {}, {}
+    for _, list in ipairs({ kept, others }) do
+        for _, m in ipairs(list) do
+            order[#order + 1] = displayKey(m)
+            seen[displayKey(m)] = true
+        end
+    end
+    local f = io.open(orderPath)
+    if f then
+        for line in f:lines() do
+            if line ~= "" and not seen[line] then
+                seen[line] = true
+                order[#order + 1] = line
+            end
+        end
+        f:close()
+    end
+    local out = io.open(orderPath, "w")
+    if out then
+        out:write(table.concat(order, "\n"), "\n")
+        out:close()
+    end
+end
+
 hl.on("monitor.added", function()
     local now, before, was = monitorNames(), {}, {}
     for _, n in ipairs(knownMonitors) do was[n] = true end
@@ -280,7 +323,10 @@ hl.on("monitor.added", function()
         if was[n] then before[#before + 1] = n end
     end
     knownMonitors = now
-    if #before > 0 and #before < #now then saveLayout(before) end
+    if #before > 0 and #before < #now then
+        saveLayout(before)
+        if settled then numberNewcomersLast(before) end
+    end
     resetWorkspacesSoon()
     if S.allows("lid") then hl.exec_cmd("~/.config/hypr/lid.sh displays") end
 end)
