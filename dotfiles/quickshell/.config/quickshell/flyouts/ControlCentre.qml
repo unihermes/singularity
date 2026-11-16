@@ -722,10 +722,6 @@ FlyoutPanel {
                                     }
                                 }
                                 // the boot targets open right under Reboot
-                                FlyoutHeading {
-                                    visible: powerItem.hasTargets && controlCentre.expanded === "reboot"
-                                    text: "REBOOT INTO"
-                                }
                                 FlyoutChipLine {
                                     visible: powerItem.hasTargets && controlCentre.expanded === "reboot"
                                     onPicked: act => controlCentre.run(act)

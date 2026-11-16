@@ -66,13 +66,6 @@ Column {
             y: Theme.spaceL
             width: parent.width - Theme.spaceL * 2
             spacing: Theme.spaceM
-            Text {
-                text: "Reboot into"
-                color: Theme.textStrong
-                font.family: Theme.fontText
-                font.weight: Theme.weightStrong
-                font.pixelSize: Theme.fontBody
-            }
             FlyoutChipLine {
                 onPicked: act => root.cc.run(act)
                 chips: Session.rebootTargets.map(t => ({ icon: t.icon, text: t.label, act: "into:" + t.act }))
