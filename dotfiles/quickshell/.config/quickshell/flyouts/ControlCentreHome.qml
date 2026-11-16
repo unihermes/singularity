@@ -152,17 +152,39 @@ Column {
     Item {
         visible: root.playing
         width: parent.width
-        height: Theme.rowHeightTall
+        height: Theme.rowHeightTall + Theme.spaceS
 
-        Text {
+        // a small thumbnail of the track's art, the note glyph while it has none
+        Rectangle {
             id: noteGlyph
             anchors.verticalCenter: parent.verticalCenter
-            width: Theme.iconCell
-            horizontalAlignment: Text.AlignHCenter
-            text: "󰎆"
-            color: Theme.accent
-            font.family: Theme.fontIcon
-            font.pixelSize: Theme.fontIconSize
+            width: Theme.rowHeightTall
+            height: width
+            radius: Theme.radiusSmall
+            color: Theme.washHover
+            clip: true
+
+            Image {
+                id: thumb
+                readonly property var urls: Media.artUrls(Media.player)
+                property int attempt: 0
+                onUrlsChanged: attempt = 0
+                onStatusChanged: if (status === Image.Error && attempt < urls.length - 1) attempt++
+                anchors.fill: parent
+                source: urls[attempt] || ""
+                fillMode: Image.PreserveAspectCrop
+                sourceSize.width: parent.width * 2
+                asynchronous: true
+                visible: status === Image.Ready
+            }
+            Text {
+                anchors.centerIn: parent
+                visible: thumb.status !== Image.Ready
+                text: "󰎆"
+                color: Theme.accent
+                font.family: Theme.fontIcon
+                font.pixelSize: Theme.fontIconSize
+            }
         }
         Text {
             anchors.left: noteGlyph.right
