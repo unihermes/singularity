@@ -278,7 +278,7 @@ Column {
         Row {
             id: transport
             anchors.right: parent.right
-            anchors.rightMargin: Theme.spaceXs
+            anchors.rightMargin: Theme.spaceS
             anchors.verticalCenter: parent.verticalCenter
             Repeater {
                 model: [
