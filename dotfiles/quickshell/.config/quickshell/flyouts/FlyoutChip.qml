@@ -66,7 +66,6 @@ Item {
     Row {
         id: content
         anchors.centerIn: parent
-        width: Math.max(0, root.width - Theme.spaceM * 2)
         spacing: Theme.spaceS
 
         Text {
@@ -91,7 +90,7 @@ Item {
         Text {
             id: label
             anchors.verticalCenter: parent.verticalCenter
-            width: Math.max(0, Math.min(implicitWidth, content.width
+            width: Math.max(0, Math.min(implicitWidth, root.width - Theme.spaceM * 2
                 - (iconText.visible ? iconText.width + content.spacing : 0)))
             elide: Text.ElideRight
             text: root.armed ? root.confirmText : root.text
