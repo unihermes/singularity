@@ -37,7 +37,7 @@ Column {
         signal moreClicked()
 
         width: parent ? parent.width : 0
-        height: Theme.rowHeightTall + 8
+        height: Theme.rowHeightTall + 4
         readonly property real spacing: Theme.spaceS
         readonly property bool hot: rowHover.hovered && level.chevron
         readonly property color edge: hot ? Theme.strokeHover : "transparent"
@@ -46,6 +46,7 @@ Column {
 
         // the outline runs over the whole row, slider included
         Rectangle {
+            z: 1
             anchors.fill: parent
             radius: Theme.radiusInner
             color: "transparent"
