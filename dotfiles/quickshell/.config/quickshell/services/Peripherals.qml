@@ -43,7 +43,9 @@ Singleton {
     readonly property var devices: {
         var ds = UPower.devices ? UPower.devices.values : []
         var out = ds.filter(d => d.ready && d.isPresent && !d.powerSupply
-                && d.type !== UPowerDeviceType.LinePower && d.type !== UPowerDeviceType.Battery)
+                && d.type !== UPowerDeviceType.LinePower && d.type !== UPowerDeviceType.Battery
+                // headsetcontrol's entry below stands for the headset UPower also lists
+                && !(Channels.headset !== "" && d.type === UPowerDeviceType.Headset))
             .map(d => ({
                 key: d.nativePath,
                 name: d.model || d.nativePath,
