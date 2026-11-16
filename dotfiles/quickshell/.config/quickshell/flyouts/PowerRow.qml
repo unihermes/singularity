@@ -86,6 +86,9 @@ Item {
         visible: root.more
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
+        implicitWidth: Theme.rowHeightTall * 1.5
+        implicitHeight: Theme.rowHeightTall * 1.5
+        glyphSize: Theme.fontIconSize * 1.6
         icon: root.expanded ? "󰅀" : "󰅂"
         onClicked: root.moreClicked()
     }
