@@ -147,16 +147,25 @@ Column {
     readonly property bool playing: !!Media.player && Media.titleOf(Media.player) !== ""
     function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;") }
 
-    FlyoutDivider { visible: root.playing }
-
     Item {
         visible: root.playing
         width: parent.width
-        height: Theme.rowHeightTall + Theme.spaceS
+        height: Theme.rowHeightTall + Theme.spaceL
+
+        // the player's own outline
+        Rectangle {
+            anchors.fill: parent
+            radius: Theme.radiusInner
+            color: "transparent"
+            border.width: Theme.borderWidth
+            border.color: Theme.stroke
+        }
 
         // a small thumbnail of the track's art, the note glyph while it has none
         Rectangle {
             id: noteGlyph
+            anchors.left: parent.left
+            anchors.leftMargin: Theme.spaceS
             anchors.verticalCenter: parent.verticalCenter
             width: Theme.rowHeightTall
             height: width
@@ -213,6 +222,7 @@ Column {
         Row {
             id: transport
             anchors.right: parent.right
+            anchors.rightMargin: Theme.spaceXs
             anchors.verticalCenter: parent.verticalCenter
             Repeater {
                 model: [
