@@ -166,7 +166,7 @@ Singleton {
         running: probe.found
         repeat: true
         triggeredOnStart: true
-        interval: root.chatmix < 0 || root.headset !== "on" ? 3000 : root.dialBusy ? 300 : 1000
+        interval: root.chatmix < 0 || root.headset !== "on" ? 3000 : root.dialBusy ? 120 : 350
         onTriggered: if (!read.running) read.running = true
     }
 
