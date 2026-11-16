@@ -704,22 +704,15 @@ FlyoutPanel {
                                 readonly property bool hasTargets: modelData.act === "reboot" && Session.rebootTargets.length > 0
                                 width: parent.width
 
-                                FlyoutRow {
-                                    leadingIcon: powerItem.modelData.icon
+                                PowerRow {
+                                    icon: powerItem.modelData.icon
                                     label: powerItem.modelData.label
-                                    note: armed ? "" : controlCentre.shortDetail[powerItem.modelData.act] || powerItem.modelData.detail || ""
+                                    caption: controlCentre.shortDetail[powerItem.modelData.act] || powerItem.modelData.detail || ""
                                     confirmText: controlCentre.confirmed.indexOf(powerItem.modelData.act) !== -1 ? "Click again" : ""
-                                    reserve: powerItem.hasTargets ? rebootOptions.width + Theme.spaceS : 0
+                                    more: powerItem.hasTargets
+                                    expanded: controlCentre.expanded === "reboot"
                                     onActivated: controlCentre.run(powerItem.modelData.act)
-
-                                    IconButton {
-                                        id: rebootOptions
-                                        visible: powerItem.hasTargets
-                                        anchors.right: parent.right
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        icon: controlCentre.expanded === "reboot" ? "󰅀" : "󰅂"
-                                        onClicked: controlCentre.expand("reboot")
-                                    }
+                                    onMoreClicked: controlCentre.expand("reboot")
                                 }
                                 // the boot targets open right under Reboot
                                 FlyoutChipLine {
