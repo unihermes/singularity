@@ -150,7 +150,7 @@ Column {
     Item {
         visible: root.playing
         width: parent.width
-        height: Theme.rowHeightTall + Theme.spaceL
+        height: Theme.rowHeightTall + Theme.spaceS
 
         // the player's own outline
         Rectangle {
@@ -165,7 +165,7 @@ Column {
         Rectangle {
             id: noteGlyph
             anchors.left: parent.left
-            anchors.leftMargin: Theme.spaceS
+            anchors.leftMargin: Theme.spaceXs
             anchors.verticalCenter: parent.verticalCenter
             width: Theme.rowHeightTall
             height: width
