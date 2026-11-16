@@ -512,7 +512,8 @@ Singleton {
             // none while the sidebar's out, where it shows; the sound still plays
             const pops = !hold && !n.lastGeneration && !root.shown
             root.popups = pops ? [entry].concat(others) : others
-            if (!hold && !n.lastGeneration && root.isClaude(n)) root.playClaudeSound(/waiting for you/.test(n.summary) ? "waiting" : "done")
+            // the terminal's own sound is its hook's, which stays quiet while you're in that terminal
+            if (!hold && !n.lastGeneration && root.isClaude(n) && root.stackOf(n) !== "terminal-claude") root.playClaudeSound(/waiting for you/.test(n.summary) ? "waiting" : "done")
             root.now = time
             if (root.viewing) root.lastSeen = time
             root.attach(n)

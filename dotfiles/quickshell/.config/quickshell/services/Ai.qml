@@ -744,9 +744,7 @@ Singleton {
     readonly property var tabNames: ({ chat: "Chat", code: "Code" })
     function notify(t, engine, title, body) {
         if (shown) {
-            // no popup while it's open, but Claude still sounds
-            if (engine === "claude")
-                Notifications.playClaudeSound(title === "waiting for you" ? "waiting" : "done")
+            // you're looking at it: no popup, no sound
             return
         }
         var p = t === "code" ? codeNote : chatNote
