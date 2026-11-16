@@ -39,6 +39,13 @@ python-gobject
 python-icalendar
 python-recurring-ical-events
 
+# VSCodium's Python and R extensions: the Jupyter extension needs ipykernel for
+# a Python kernel, the R extension needs R (gcc-fortran builds its CRAN
+# packages, e.g. languageserver and IRkernel, into ~/.local/share/R)
+python-ipykernel
+r
+gcc-fortran
+
 # compositor + session
 # ly is a TUI greeter that reads the wayland-sessions entry hyprland ships,
 # so Hyprland shows up as a choice with no extra config. If pacman cannot
