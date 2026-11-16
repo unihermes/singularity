@@ -745,7 +745,8 @@ Singleton {
     function notify(t, engine, title, body) {
         if (shown) {
             // no popup while it's open, but Claude still sounds
-            if (engine === "claude") Notifications.playClaudeSound()
+            if (engine === "claude")
+                Notifications.playClaudeSound(title === "waiting for you" ? "waiting" : "done")
             return
         }
         var p = t === "code" ? codeNote : chatNote

@@ -343,8 +343,8 @@ Singleton {
     }
 
     // Claude's notification sound
-    function playClaudeSound() {
-        Quickshell.execDetached([Quickshell.shellPath("scripts/claude-sound.sh")])
+    function playClaudeSound(kind) {
+        Quickshell.execDetached([Quickshell.shellPath("scripts/claude-sound.sh"), kind || "done"])
     }
 
     // Seconds a popup stays: what the sender asked for (expireTimeout is the
@@ -512,7 +512,7 @@ Singleton {
             // none while the sidebar's out, where it shows; the sound still plays
             const pops = !hold && !n.lastGeneration && !root.shown
             root.popups = pops ? [entry].concat(others) : others
-            if (!hold && !n.lastGeneration && root.isClaude(n)) root.playClaudeSound()
+            if (!hold && !n.lastGeneration && root.isClaude(n)) root.playClaudeSound(/waiting for you/.test(n.summary) ? "waiting" : "done")
             root.now = time
             if (root.viewing) root.lastSeen = time
             root.attach(n)
