@@ -25,7 +25,7 @@ Item {
     signal moreClicked()
 
     width: parent ? parent.width : 0
-    implicitHeight: Theme.glass ? Theme.fs(44) : Theme.rowHeightTall
+    implicitHeight: Theme.glass ? Theme.fs(50) : Theme.rowHeightTall + 8
 
     // where the state's words end: before the switch, else the chevron
     readonly property real wordsEnd: toggle.visible ? toggle.x - Theme.spaceL

@@ -37,7 +37,7 @@ Column {
         signal moreClicked()
 
         width: parent ? parent.width : 0
-        height: Theme.rowHeightTall
+        height: Theme.rowHeightTall + 8
         spacing: Theme.spaceS
 
         IconButton {
