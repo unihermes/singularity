@@ -154,11 +154,19 @@ Column {
 
         // the player's own outline
         Rectangle {
+            id: outline
             anchors.fill: parent
             radius: Theme.radiusInner
-            color: "transparent"
-            border.width: Theme.borderWidth
-            border.color: Theme.stroke
+            color: Theme.frameCustom && Theme.frameStyle === "notch" ? "transparent" : Theme.controlFill("transparent")
+            border.width: Theme.controlBorder(Theme.stroke)
+            border.color: Theme.controlStroke(Theme.stroke)
+
+            ControlEdge {
+                visible: Theme.controlStyle === "channel" || Theme.controlStyle === "double" || Theme.frameCustom
+                ground: Theme.frameStyle === "notch" ? outline.color : "transparent"
+                stroke: Theme.stroke; radius: outline.radius
+                lit: false
+            }
         }
 
         // a small thumbnail of the track's art, the note glyph while it has none
