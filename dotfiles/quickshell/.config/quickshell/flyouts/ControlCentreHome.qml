@@ -49,30 +49,59 @@ Column {
         }
         Slider {
             anchors.verticalCenter: parent.verticalCenter
-            width: level.width - glyphBtn.width - valueLabel.width - endBtn.width - level.spacing * 3
+            width: level.width - glyphBtn.width - more.width - level.spacing * 2
             value: level.value
             opacity: level.warn ? 0.5 : 1
             onMoved: v => level.moved(v)
         }
-        Text {
-            id: valueLabel
+        // the percent and the chevron are one button, framed together
+        Rectangle {
+            id: more
+            readonly property bool hot: level.chevron && moreMouse.containsMouse
+            readonly property color edge: hot ? Theme.strokeHover : "transparent"
             anchors.verticalCenter: parent.verticalCenter
-            width: Theme.fs(44)
-            horizontalAlignment: Text.AlignRight
-            text: level.valueText
-            color: Theme.textStrong
-            font.family: Theme.fontText
-            font.weight: Theme.weightBody
-            font.pixelSize: Theme.fontSmall
-        }
-        IconButton {
-            id: endBtn
-            anchors.verticalCenter: parent.verticalCenter
+            width: Theme.fs(44) + (level.chevron ? Theme.controlSize : 0) + Theme.spaceS
             height: level.height
-            opacity: level.chevron ? 1 : 0
-            enabled: level.chevron
-            icon: level.expanded ? "󰅀" : "󰅂"
-            onClicked: level.moreClicked()
+            radius: Theme.radiusInner
+            color: hot ? Theme.hoverFillSoft : "transparent"
+            border.width: Theme.controlBorder(edge)
+            border.color: Theme.controlStroke(edge)
+
+            ControlEdge {
+                visible: more.hot
+                stroke: more.edge
+                radius: more.radius
+            }
+            Text {
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                width: Theme.fs(44)
+                horizontalAlignment: Text.AlignRight
+                text: level.valueText
+                color: Theme.textStrong
+                font.family: Theme.fontText
+                font.weight: Theme.weightBody
+                font.pixelSize: Theme.fontSmall
+            }
+            Text {
+                visible: level.chevron
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                width: Theme.controlSize
+                horizontalAlignment: Text.AlignHCenter
+                text: level.expanded ? "󰅀" : "󰅂"
+                color: more.hot ? Theme.textStrong : Theme.subtext
+                font.family: Theme.fontIcon
+                font.pixelSize: Theme.fontIconSize
+            }
+            MouseArea {
+                id: moreMouse
+                anchors.fill: parent
+                enabled: level.chevron
+                hoverEnabled: enabled
+                cursorShape: Qt.PointingHandCursor
+                onClicked: level.moreClicked()
+            }
         }
     }
 
