@@ -247,7 +247,7 @@ Column {
         }
     }
 
-    FlyoutDivider {}
+    FlyoutDivider { visible: !root.playing }
 
     TileGrid {
         visible: !root.pane
