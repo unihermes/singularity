@@ -1652,9 +1652,43 @@ local function refitMonocle()
     end
 end
 
-hl.on("monitor.added", refitMonocle)
-hl.on("monitor.removed", refitMonocle)
-hl.on("monitor.layout_changed", refitMonocle)
+-- Pulls a floater back on screen when its monitor is smaller than the one it
+-- was sized for (a workspace follows a monitor plugged in live): one bigger
+-- than the usable area shrinks to it, one whose centre is off the monitor
+-- moves in. Monocle and filled windows have their own re-fit.
+local function fitOverflowing()
+    for _, w in ipairs(hl.get_windows()) do
+        local mon = w.monitor
+        if w.floating and w.mapped and not w.hidden and w.fullscreen == 0 and mon
+                and not w.pinned and w.class and w.class ~= ""
+                and not isMonocleExempt(w) and not hasTag(w, "menu")
+                and not hasTag(w, "monocle") and not hasTag(w, "filled") then
+            local st = stateOf(w.address)
+            if not (st.minimized or st.parked or st.settling or st.refilling) then
+                local area = usableArea(mon)
+                local cx, cy = w.at.x + w.size.x / 2, w.at.y + w.size.y / 2
+                local off = cx < mon.x or cx > mon.x + mon.width / mon.scale
+                    or cy < mon.y or cy > mon.y + mon.height / mon.scale
+                if off or w.size.x > area.w + 4 or w.size.y > area.h + 4 then
+                    local r = { w = math.min(w.size.x, area.w), h = math.min(w.size.y, area.h) }
+                    r.x = math.max(area.x, math.min(w.at.x, area.x + area.w - r.w))
+                    r.y = math.max(area.y, math.min(w.at.y, area.y + area.h - r.h))
+                    applyRect(w, r)
+                end
+            end
+        end
+    end
+end
+
+-- the monitor's workspaces follow it a moment after the event
+local function onMonitorsChanged()
+    refitMonocle()
+    fitOverflowing()
+    hl.timer(function() refitMonocle() fitOverflowing() end, { timeout = 400, type = "oneshot" })
+end
+hl.on("monitor.added", onMonitorsChanged)
+hl.on("monitor.removed", onMonitorsChanged)
+hl.on("monitor.layout_changed", onMonitorsChanged)
 
 -- The bar calls this after its reserved edge changes. Tiled windows are
 -- handled by Hyprland; floating fills and monocle shapes are ours to refit.
@@ -1678,6 +1712,7 @@ hl.timer(function()
     local active = hl.get_active_window()
     if active and not hasTag(active, "filled") then captureShape(active) end
     singularityRefitWindows()
+    fitOverflowing()
 end, { timeout = 200, type = "oneshot" })
 hl.timer(function()
     for _, w in ipairs(hl.get_windows()) do syncFillBorder(w.address) end
