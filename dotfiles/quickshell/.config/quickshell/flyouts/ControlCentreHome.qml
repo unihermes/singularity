@@ -144,13 +144,6 @@ Column {
         checkable: false; goes: true
         onClicked: root.cc.page = "focus"
     }
-    ControlRow {
-        visible: !root.pane
-        icon: "󰐥"; title: "Power"
-        caption: (PpdProfile.choices.find(c => c.value === PpdProfile.profile) || { text: "Session" }).text
-        checkable: false; goes: true
-        onClicked: root.cc.page = "power"
-    }
     readonly property bool playing: !!Media.player && Media.titleOf(Media.player) !== ""
     function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;") }
 
