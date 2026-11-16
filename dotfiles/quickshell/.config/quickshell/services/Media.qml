@@ -229,7 +229,7 @@ Singleton {
         seenTracks = kept
         pruneTracks()
     }
-    // title -> { pos, at, len } of each browser track when last seen
+    // title -> { pos, at, len, rate } of each browser track when last seen
     // playing, written each second (in place: only read through clock)
     property var trackPos: ({})
     Timer {
@@ -239,7 +239,7 @@ Singleton {
         onTriggered: {
             var p = root.player
             p.positionChanged()
-            if (p.trackTitle) root.trackPos[String(p.trackTitle)] = { pos: p.position, at: Date.now(), len: root.lengthOf(p) }
+            if (p.trackTitle) root.trackPos[String(p.trackTitle)] = { pos: p.position, at: Date.now(), len: root.lengthOf(p), rate: p.rate > 0 ? p.rate : 1 }
         }
     }
     // ticks while a heard tab stands in, so its position moves on
@@ -254,7 +254,7 @@ Singleton {
     // has played since
     function heardPos() {
         var s = heard ? trackPos[heard.title] : null
-        return s ? Math.min(s.len > 0 ? s.len : Infinity, s.pos + Math.max(0, clock - s.at) / 1000) : 0
+        return s ? Math.min(s.len > 0 ? s.len : Infinity, s.pos + Math.max(0, clock - s.at) / 1000 * (s.rate || 1)) : 0
     }
     function positionOf(p) { return !p ? 0 : p === player && heard ? heardPos() : p.position }
     function titleOf(p) { return p === player && heard ? heard.title : p ? String(p.trackTitle || "") : "" }

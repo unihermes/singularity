@@ -128,8 +128,10 @@ WidgetCard {
             spacing: Theme.fit(6)
 
             // position ticks once a second; easing each step reads as lag
+            // always laid out: the length arrives a moment after the track
+            // does, and the art above would resize when the bar appeared
             Meter {
-                visible: root.hasLength
+                opacity: root.hasLength ? 1 : 0
                 width: parent.width
                 fraction: root.frac
                 animated: false
@@ -137,14 +139,15 @@ WidgetCard {
                     anchors.fill: parent
                     anchors.topMargin: -Theme.fit(6)
                     anchors.bottomMargin: -Theme.fit(6)
-                    enabled: Media.controllable(root.player) && root.player.canSeek
+                    enabled: root.hasLength && Media.controllable(root.player) && root.player.canSeek
                     cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                     onClicked: mouse => root.player.position =
                         root.length * Math.max(0, Math.min(1, mouse.x / width))
                 }
             }
             Item {
-                visible: root.hasLength && root.large
+                visible: root.large
+                opacity: root.hasLength ? 1 : 0
                 width: parent.width
                 height: pos.height
                 WidgetText { id: pos; card: root; color: root.fgDim; text: root.player ? Media.fmtTime(Media.positionOf(root.player)) : "" }
