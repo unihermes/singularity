@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Renders Claude's notification sounds into qs/sounds/ (a bell chime: a soft
-pair, or three, of notes a fifth apart, reverb and an octave shimmer). Seeded, so reruns match."""
+pair of notes a fifth apart, reverb and an octave shimmer). Seeded, so reruns match."""
 import wave
 from pathlib import Path
 import numpy as np
@@ -34,5 +34,6 @@ def save(name, x):
         w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR)
         w.writeframes((x * 32767).astype("<i2").tobytes())
 
-save("claude-done.wav", chime(2, 659.25, 1.5, .09, .3))
-save("claude-waiting.wav", chime(3, 523.25, 1.5, .16, .8))
+# one sound for both: done and waiting
+for name in ("claude-done.wav", "claude-waiting.wav"):
+    save(name, chime(2, 523.25, 1.5, .09, .3))
