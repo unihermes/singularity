@@ -54,8 +54,35 @@ Column {
         }
     }
 
+    // the boot targets, right under the status card so the tiles keep the bottom
+    GlassCard {
+        id: targetsCard
+        visible: root.cc.expanded === "reboot" && Session.rebootTargets.length > 0
+        width: parent.width
+        height: visible ? targetsCol.height + Theme.spaceL * 2 : 0
+        Column {
+            id: targetsCol
+            x: Theme.spaceL
+            y: Theme.spaceL
+            width: parent.width - Theme.spaceL * 2
+            spacing: Theme.spaceM
+            Text {
+                text: "Reboot into"
+                color: Theme.textStrong
+                font.family: Theme.fontText
+                font.weight: Theme.weightStrong
+                font.pixelSize: Theme.fontBody
+            }
+            FlyoutChipLine {
+                onPicked: act => root.cc.run(act)
+                chips: Session.rebootTargets.map(t => ({ icon: t.icon, text: t.label, act: "into:" + t.act }))
+            }
+        }
+    }
+
     GlassTileGrid {
         fillHeight: root.fillHeight - statusCard.height - root.spacing
+            - (targetsCard.visible ? targetsCard.height + root.spacing : 0)
         model: root.cc.powerActions.map(a => ({
             id: a.act, icon: a.icon, title: a.label,
             caption: root.cc.shortDetail[a.act] || a.detail || "",

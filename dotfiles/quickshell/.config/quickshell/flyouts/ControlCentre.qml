@@ -722,12 +722,12 @@ FlyoutPanel {
                     }
 
                     FlyoutHeading {
-                        visible: controlCentre.page === "power" && controlCentre.expanded === "reboot"
+                        visible: controlCentre.page === "power" && !Theme.glass && controlCentre.expanded === "reboot"
                         text: "REBOOT INTO"
                     }
 
                     FlyoutChipLine {
-                        visible: controlCentre.page === "power" && controlCentre.expanded === "reboot"
+                        visible: controlCentre.page === "power" && !Theme.glass && controlCentre.expanded === "reboot"
                         onPicked: act => controlCentre.run(act)
                         chips: Session.rebootTargets.map(t => ({ icon: t.icon, text: t.label, act: "into:" + t.act }))
                     }
