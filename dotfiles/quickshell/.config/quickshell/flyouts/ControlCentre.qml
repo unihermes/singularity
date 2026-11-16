@@ -698,39 +698,43 @@ FlyoutPanel {
                         Repeater {
                             model: controlCentre.powerActions
 
-                            FlyoutRow {
-                                id: powerRow
+                            Column {
+                                id: powerItem
                                 required property var modelData
                                 readonly property bool hasTargets: modelData.act === "reboot" && Session.rebootTargets.length > 0
-                                leadingIcon: modelData.icon
-                                label: modelData.label
-                                note: armed ? "" : controlCentre.shortDetail[modelData.act] || modelData.detail || ""
-                                confirmText: controlCentre.confirmed.indexOf(modelData.act) !== -1 ? "Click again" : ""
-                                reserve: hasTargets ? rebootOptions.width + Theme.spaceS : 0
-                                onActivated: controlCentre.run(modelData.act)
+                                width: parent.width
 
-                                IconButton {
-                                    id: rebootOptions
-                                    visible: powerRow.hasTargets
-                                    anchors.right: parent.right
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    icon: controlCentre.expanded === "reboot" ? "󰅀" : "󰅂"
-                                    onClicked: controlCentre.expand("reboot")
+                                FlyoutRow {
+                                    leadingIcon: powerItem.modelData.icon
+                                    label: powerItem.modelData.label
+                                    note: armed ? "" : controlCentre.shortDetail[powerItem.modelData.act] || powerItem.modelData.detail || ""
+                                    confirmText: controlCentre.confirmed.indexOf(powerItem.modelData.act) !== -1 ? "Click again" : ""
+                                    reserve: powerItem.hasTargets ? rebootOptions.width + Theme.spaceS : 0
+                                    onActivated: controlCentre.run(powerItem.modelData.act)
+
+                                    IconButton {
+                                        id: rebootOptions
+                                        visible: powerItem.hasTargets
+                                        anchors.right: parent.right
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        icon: controlCentre.expanded === "reboot" ? "󰅀" : "󰅂"
+                                        onClicked: controlCentre.expand("reboot")
+                                    }
+                                }
+                                // the boot targets open right under Reboot
+                                FlyoutHeading {
+                                    visible: powerItem.hasTargets && controlCentre.expanded === "reboot"
+                                    text: "REBOOT INTO"
+                                }
+                                FlyoutChipLine {
+                                    visible: powerItem.hasTargets && controlCentre.expanded === "reboot"
+                                    onPicked: act => controlCentre.run(act)
+                                    chips: Session.rebootTargets.map(t => ({ icon: t.icon, text: t.label, act: "into:" + t.act }))
                                 }
                             }
                         }
                     }
 
-                    FlyoutHeading {
-                        visible: controlCentre.page === "power" && !Theme.glass && controlCentre.expanded === "reboot"
-                        text: "REBOOT INTO"
-                    }
-
-                    FlyoutChipLine {
-                        visible: controlCentre.page === "power" && !Theme.glass && controlCentre.expanded === "reboot"
-                        onPicked: act => controlCentre.run(act)
-                        chips: Session.rebootTargets.map(t => ({ icon: t.icon, text: t.label, act: "into:" + t.act }))
-                    }
                 }
             }
         }
