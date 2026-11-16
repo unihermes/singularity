@@ -68,6 +68,7 @@ Column {
         IconButton {
             id: endBtn
             anchors.verticalCenter: parent.verticalCenter
+            height: level.height
             opacity: level.chevron ? 1 : 0
             enabled: level.chevron
             icon: level.expanded ? "󰅀" : "󰅂"

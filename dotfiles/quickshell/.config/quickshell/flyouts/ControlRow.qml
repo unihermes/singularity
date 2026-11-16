@@ -111,7 +111,7 @@ Item {
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             width: Theme.borderWidth
-            height: parent.height - Theme.spaceM * 2
+            height: parent.height
             color: Theme.stroke
         }
 
