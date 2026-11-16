@@ -38,8 +38,6 @@ Item {
         readonly property color edge: hot ? Theme.strokeHover : "transparent"
         visible: !Theme.glass
         anchors.fill: parent
-        anchors.leftMargin: -Theme.spaceS
-        anchors.rightMargin: -Theme.spaceS
         radius: Theme.radiusInner
         color: "transparent"
         border.width: Theme.controlBorder(edge)
@@ -56,6 +54,7 @@ Item {
         id: glyph
         visible: !Theme.glass
         anchors.left: parent.left
+        anchors.leftMargin: Theme.spaceS
         anchors.verticalCenter: parent.verticalCenter
         width: Theme.iconCell
         horizontalAlignment: Text.AlignHCenter
@@ -102,7 +101,7 @@ Item {
         id: toggle
         visible: !Theme.glass && root.checkable && !root.goes
         anchors.right: end.visible ? end.left : parent.right
-        anchors.rightMargin: end.visible ? Theme.spaceS : 0
+        anchors.rightMargin: end.visible ? Theme.spaceS : Theme.spaceM
         anchors.verticalCenter: parent.verticalCenter
         interactive: false
         checked: root.checked
@@ -114,6 +113,7 @@ Item {
         id: end
         visible: !Theme.glass && (root.split || root.goes)
         anchors.right: parent.right
+        anchors.rightMargin: Theme.spaceS
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         width: Theme.controlSize + (root.split ? Theme.spaceS : 0)
