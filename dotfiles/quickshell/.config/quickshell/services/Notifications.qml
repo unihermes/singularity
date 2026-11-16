@@ -344,10 +344,7 @@ Singleton {
 
     // ChatGPT's notification sound, else freedesktop's
     function playClaudeSound() {
-        Quickshell.execDetached(["sh", "-c",
-            "for f in /usr/lib/chatgpt/resources/codex-notification.wav "
-            + "/usr/share/sounds/freedesktop/stereo/message-new-instant.oga; do "
-            + "[ -r \"$f\" ] && exec pw-play \"$f\"; done"])
+        Quickshell.execDetached([Quickshell.shellPath("scripts/claude-sound.sh")])
     }
 
     // Seconds a popup stays: what the sender asked for (expireTimeout is the

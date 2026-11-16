@@ -743,7 +743,11 @@ Singleton {
     // a newer one takes over its Open.
     readonly property var tabNames: ({ chat: "Chat", code: "Code" })
     function notify(t, engine, title, body) {
-        if (shown) return
+        if (shown) {
+            // no popup while it's open, but Claude still sounds
+            if (engine === "claude") Notifications.playClaudeSound()
+            return
+        }
         var p = t === "code" ? codeNote : chatNote
         // the prose only (no code or tables), markdown marks and line
         // breaks out, a couple of lines kept
