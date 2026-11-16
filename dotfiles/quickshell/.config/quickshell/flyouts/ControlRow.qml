@@ -31,13 +31,25 @@ Item {
     readonly property real wordsEnd: toggle.visible ? toggle.x - Theme.spaceL
         : end.visible ? end.x - Theme.spaceL : width
 
+    // the hover outline, as on the level rows
     Rectangle {
+        id: frame
+        readonly property bool hot: root.usable && (face.containsMouse || more.containsMouse)
+        readonly property color edge: hot ? Theme.strokeHover : "transparent"
         visible: !Theme.glass
         anchors.fill: parent
         anchors.leftMargin: -Theme.spaceS
         anchors.rightMargin: -Theme.spaceS
         radius: Theme.radiusInner
-        color: face.containsMouse || more.containsMouse ? Theme.hoverFill : "transparent"
+        color: "transparent"
+        border.width: Theme.controlBorder(edge)
+        border.color: Theme.controlStroke(edge)
+
+        ControlEdge {
+            visible: frame.hot
+            stroke: frame.edge
+            radius: frame.radius
+        }
     }
 
     Text {
