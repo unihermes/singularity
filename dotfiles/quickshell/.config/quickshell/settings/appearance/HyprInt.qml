@@ -11,6 +11,7 @@ SettingsField {
 
     property var path: []
     property string key: ""
+    previewKey: "windows"
     property int min: 0
     property int max: 20
     property string suffix: "px"

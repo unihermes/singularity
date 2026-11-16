@@ -32,6 +32,9 @@ Item {
     // the label of the field a search result picked, "" for none; fields
     // find it by walking up to here, so they need this marker to stop on
     property string highlight: ""
+    // what the row under the pointer says it changes (SettingsField's
+    // previewKey), for a page that draws a preview of it
+    property string hoverKey: ""
     readonly property bool isSettingsPage: true
     property bool sectioned: false
     // the rows a section shows before its More (FlyoutHeading); 0 shows

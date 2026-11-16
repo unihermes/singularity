@@ -42,6 +42,7 @@ SettingsPage {
     pinned: LivePreview {
         kind: ({ colour: "flyout", desktop: "windows", shape: "windows", type: "flyout", bar: "bar", panels: "launcher", motion: "windows" })[page.tab]
         picked: page.barModule
+        hoverKey: page.hoverKey
         onPick: id => page.barModule = id
     }
     // Panels draws a picture beside each of its sections instead

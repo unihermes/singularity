@@ -12,6 +12,7 @@ SettingsField {
 
     property var path: []
     property string key: ""
+    previewKey: "windows"
     property int min: 50
     // a slider, written when the drag ends, in the stepper's place
     property bool slider: false

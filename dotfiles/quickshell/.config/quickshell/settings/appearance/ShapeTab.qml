@@ -148,6 +148,7 @@ SettingsTab {
 
     SettingsField {
         label: "Dim unfocused"
+        previewKey: "windows"
         hint: "Darken the windows you're not in"
         HyprChip { anchors.right: parent.right; path: ["decoration"]; key: "dim_inactive"; what: "Dim unfocused" }
     }
@@ -159,6 +160,7 @@ SettingsTab {
 
     SettingsField {
         label: "Blur"
+        previewKey: "windows"
         hint: "Behind translucent windows and the shell"
         HyprChip { anchors.right: parent.right; path: ["decoration", "blur"]; key: "enabled"; what: "Blur" }
     }

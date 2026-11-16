@@ -5,6 +5,8 @@
 //             set; a click on one picks it (`picked`, `pick`)
 //   launcher  the bar and the launcher in its layout and position
 //   windows   the bar and two windows, the left one focused
+// `hoverKey` is the setting under the pointer on the page: the part of the
+// picture it changes is outlined.
 
 import Quickshell
 import Quickshell.Widgets
@@ -20,6 +22,33 @@ ClippingRectangle {
     // bar: the module picked for its settings, and a click picking one
     property string picked: ""
     signal pick(string id)
+    property string hoverKey: ""
+
+    // the settings behind each part, by key; a field may also name a part
+    readonly property var parts: ({
+        bar: ["barStyle", "barHeight", "barIconSize", "modulePad", "barSeparator", "barChips", "barPosition",
+              "centreAnchor", "workspaceStyle", "controlIcon", "clockStyle", "clockIsland", "windowStyle",
+              "windowScope", "windowIconSize", "windowIconPadding", "iconTint", "vizStyle", "vizBars",
+              "vizShown", "musicTitle", "vizHideSilent"],
+        windows: ["windowBorderWidth", "windowBorderFocused", "windowBorderFocusedHex", "windowBorderUnfocused",
+                  "windowBorderUnfocusedHex", "windowRounding", "windowRadius", "windowShadow", "tabBar",
+                  "focusedOpacity", "unfocusedOpacity", "windowAnim", "edgeGap", "animWindows"],
+        flyout: ["flyoutWidth", "spacing", "rowScale", "fontFamily", "fontSize", "headingUpper", "headingRule",
+                 "headingMark", "headingMarkColour", "headingSize", "levelColour", "flyoutAnim"],
+        launcher: ["launcherLayout", "launcherPosition", "launcherDetails", "launcherRows"],
+        all: ["look", "accent", "accentText", "colourGood", "colourAlert", "style", "styleOptions", "radius",
+              "plain", "shadows", "gradient", "heavyLines", "seeThrough", "paletteBase", "paletteBar", "palettePanel",
+              "paletteSurface", "paletteOverlay", "paletteBorder", "paletteMuted", "paletteSubtext", "paletteText",
+              "paletteBright"]
+    })
+    readonly property string hot: {
+        var k = hoverKey
+        if (k === "") return ""
+        if (k === "bar" || k === "windows" || k === "flyout" || k === "launcher" || k === "all") return k
+        for (var r in parts)
+            if (parts[r].indexOf(k) >= 0) return r
+        return ""
+    }
     readonly property real sc: kind === "bar" ? 0.8 : 0.62
     // the bar on its own edge, the rest off it; the clock at the right
     // end under Flat's Taskbar layout
@@ -52,6 +81,7 @@ ClippingRectangle {
         transformOrigin: Item.TopLeft
 
         Item {
+            id: barItem
             width: parent.width
             height: Theme.barHeight
             y: lp.atBottom && lp.below ? lp.below.height + Theme.spaceS : 0
@@ -369,6 +399,25 @@ ClippingRectangle {
                 }
             }
         }
+
+        // the part the setting under the pointer changes, ringed
+        component Outline: Rectangle {
+            property Item target: null
+            property string part: ""
+            visible: !!target && target.visible && (lp.hot === part || lp.hot === "all")
+            x: target ? target.x - Theme.spaceXs : 0
+            y: target ? target.y - Theme.spaceXs : 0
+            width: target ? target.width + Theme.spaceXs * 2 : 0
+            height: target ? target.height + Theme.spaceXs * 2 : 0
+            radius: Theme.radiusInner
+            color: "transparent"
+            border.width: Math.max(2, Theme.borderWidth * 2)
+            border.color: Theme.accent
+        }
+        Outline { target: barItem; part: "bar" }
+        Outline { target: flyout; part: "flyout" }
+        Outline { target: launcher; part: "launcher" }
+        Outline { target: desk; part: "windows" }
     }
 
     // Hyprland's dimming of the unfocused window, as the Desktop tab has it

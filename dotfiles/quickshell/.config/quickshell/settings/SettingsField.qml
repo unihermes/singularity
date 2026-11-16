@@ -20,6 +20,10 @@ Item {
     // look's for a colour): while it differs the label is marked, and the
     // mark puts it back. "" for a field that isn't one.
     property string defaultKey: ""
+    // what the Appearance preview outlines while the pointer is on the row:
+    // a setting's key, or a part of the picture by name (bar, windows,
+    // flyout, launcher, all)
+    property string previewKey: defaultKey
     readonly property bool modified: defaultKey !== "" && Settings.diffs.indexOf(defaultKey) !== -1
     // width of the label column; controls get the rest. A redesigned page
     // (SettingsPage.sectioned) widens it and keeps hints to one line.
@@ -42,6 +46,14 @@ Item {
     }
     readonly property bool lit: hostPage !== null && root.label !== ""
         && hostPage.highlight === root.label
+
+    HoverHandler {
+        enabled: root.previewKey !== "" && root.hostPage !== null
+        onHoveredChanged: {
+            if (hovered) root.hostPage.hoverKey = root.previewKey
+            else if (root.hostPage.hoverKey === root.previewKey) root.hostPage.hoverKey = ""
+        }
+    }
 
     default property alias control: slot.data
     // small items on the label's line, after it (an icon theme's samples)
