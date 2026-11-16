@@ -4,7 +4,7 @@
 // sender's object while it exists (actions, image). New since the history
 // was opened and not handled in a popup is unread. DND and silenced apps
 // hold back popups only.
-// A click opens what it's about (activate); Claude's make ChatGPT's sound.
+// A click opens what it's about (activate); Claude's make a sound.
 
 pragma Singleton
 
@@ -342,7 +342,7 @@ Singleton {
         return ""
     }
 
-    // ChatGPT's notification sound, else freedesktop's
+    // Claude's notification sound
     function playClaudeSound() {
         Quickshell.execDetached([Quickshell.shellPath("scripts/claude-sound.sh")])
     }
