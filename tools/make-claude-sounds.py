@@ -26,7 +26,7 @@ def chime(notes, root, ratio, gap, decay, attack=.025, tail=.7):
     ir = rng.uniform(-1, 1, int(SR * .6)) * (1 - np.arange(int(SR * .6)) / (SR * .6)) ** 2.2
     wet = np.convolve(out, ir)[:n] * .35
     out = out + wet
-    return out * (.5 / np.abs(out).max())
+    return out * (.35 / np.abs(out).max())
 
 def save(name, x):
     OUT.mkdir(exist_ok=True)
