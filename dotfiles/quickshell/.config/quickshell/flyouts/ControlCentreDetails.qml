@@ -356,17 +356,4 @@ Column {
         }
         FlyoutRow { label: "Quiet keeps notifications in history"; enabled: false }
     }
-
-    Column {
-        visible: root.page === "tools"
-        width: parent.width
-        Repeater {
-            model: root.cc.toolActions
-            FlyoutRow {
-                required property var modelData
-                leadingIcon: modelData.icon; label: modelData.name
-                onActivated: root.cc.run(modelData.act)
-            }
-        }
-    }
 }

@@ -223,7 +223,6 @@ FlyoutPanel {
                         { key: "power", label: "Power", icon: "󰐥" },
                         { key: "appearance", label: "Appearance", icon: "󰏘" },
                         { key: "widgets", label: "Bar Widgets", icon: "󰕮" },
-                        { key: "tools", label: "Screen tools", icon: "󰹑" },
                     ]
                     FlyoutRow {
                         required property var modelData
@@ -280,7 +279,7 @@ FlyoutPanel {
 
                     ControlCentreDetails {
                         readonly property var pages: Theme.glass ? ["network", "bluetooth", "sound", "display"]
-                            : ["network", "bluetooth", "sound", "display", "focus", "tools"]
+                            : ["network", "bluetooth", "sound", "display", "focus"]
                         visible: pages.indexOf(controlCentre.page) >= 0
                         cc: controlCentre
                     }

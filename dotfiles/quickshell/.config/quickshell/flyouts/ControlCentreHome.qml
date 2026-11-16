@@ -215,10 +215,11 @@ Column {
         QuickTile { width: parent.cell; icon: "󰏘"; title: "Appearance"; goes: true; onClicked: root.cc.page = "appearance" }
         QuickTile { width: parent.cell; icon: "󰕮"; title: "Bar Widgets"; goes: true; onClicked: root.cc.page = "widgets" }
     }
-    Row {
-        width: parent.width
-        spacing: Theme.spaceS
-        FlyoutChip { width: (parent.width - parent.spacing) / 2; text: "Screen tools"; onClicked: root.cc.page = "tools" }
-        FlyoutChip { width: (parent.width - parent.spacing) / 2; text: "Settings  󰁔"; onClicked: root.cc.run("settings") }
+    // the screen tools, last on the page
+    FlyoutChipLine {
+        onPicked: act => root.cc.run(act)
+        chips: root.cc.toolActions
+            .filter(t => ["screenshot", "colourpick", "copytext", "record"].indexOf(t.act) >= 0)
+            .map(t => ({ icon: t.icon, text: { screenshot: "Capture", colourpick: "Colour", copytext: "Text" }[t.act] || t.name, act: t.act }))
     }
 }
