@@ -24,7 +24,7 @@ Column {
         target: root.cc
         function onOpenChanged() { if (root.cc.open) ddcRead.restart(); else ddcRead.stop() }
     }
-    component Level: Row {
+    component Level: Item {
         id: level
         property string icon: ""
         property bool warn: false
@@ -38,16 +38,37 @@ Column {
 
         width: parent ? parent.width : 0
         height: Theme.rowHeightTall + 8
-        spacing: Theme.spaceS
+        readonly property real spacing: Theme.spaceS
+        readonly property bool hot: rowHover.hovered && level.chevron
+        readonly property color edge: hot ? Theme.strokeHover : "transparent"
+
+        HoverHandler { id: rowHover }
+
+        // the outline runs over the whole row, slider included
+        Rectangle {
+            anchors.fill: parent
+            radius: Theme.radiusInner
+            color: "transparent"
+            border.width: Theme.controlBorder(level.edge)
+            border.color: Theme.controlStroke(level.edge)
+            ControlEdge {
+                visible: level.hot
+                stroke: level.edge
+                radius: parent.radius
+            }
+        }
 
         IconButton {
             id: glyphBtn
+            anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             icon: level.icon
             warn: level.warn
             onClicked: level.iconClicked()
         }
         Slider {
+            anchors.left: glyphBtn.right
+            anchors.leftMargin: level.spacing
             anchors.verticalCenter: parent.verticalCenter
             width: level.width - glyphBtn.width - more.width - level.spacing * 2
             value: level.value
@@ -58,20 +79,13 @@ Column {
         Rectangle {
             id: more
             readonly property bool hot: level.chevron && moreMouse.containsMouse
-            readonly property color edge: hot ? Theme.strokeHover : "transparent"
+            anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
             width: Theme.fs(44) + (level.chevron ? Theme.controlSize : 0) + Theme.spaceS
             height: level.height
             radius: Theme.radiusInner
             color: hot ? Theme.hoverFillSoft : "transparent"
-            border.width: Theme.controlBorder(edge)
-            border.color: Theme.controlStroke(edge)
 
-            ControlEdge {
-                visible: more.hot
-                stroke: more.edge
-                radius: more.radius
-            }
             Text {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
