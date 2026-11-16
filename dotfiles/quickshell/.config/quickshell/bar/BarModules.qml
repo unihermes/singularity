@@ -368,7 +368,7 @@ Item {
         }
     }
 
-    // the track's progress as a thin line along the module's foot; MPRIS
+    // the track's progress as a thin line along the frame's inner foot; MPRIS
     // doesn't push the position while playing, so it's nudged each second
     Item {
         parent: musicFrame
@@ -376,10 +376,11 @@ Item {
         visible: length > 0
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.bottom: parent.bottom
+        anchors.bottom: parent.verticalCenter
         anchors.leftMargin: Theme.spaceS
         anchors.rightMargin: Theme.spaceS
-        anchors.bottomMargin: Theme.spaceXs
+        // on the frame's inner stroke's bottom edge (inset 2), standing in for it
+        anchors.bottomMargin: 2 - musicFrame.chipHeight / 2
         height: Theme.borderWidth
 
         Timer {
