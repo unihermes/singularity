@@ -12,6 +12,7 @@ Item {
     id: root
 
     property var chips: []
+    property real chipHeight: Theme.chipHeight
     signal picked(string act)
 
     // directly in a sectioned column, with only breaks (or nothing) shown
@@ -34,7 +35,7 @@ Item {
     }
 
     width: parent ? parent.width : 0
-    implicitHeight: Theme.chipHeight
+    implicitHeight: chipHeight
 
     Row {
         visible: !root.isChipRegion
@@ -47,6 +48,7 @@ Item {
             FlyoutChip {
                 required property var modelData
                 width: (root.width - parent.spacing * (root.chips.length - 1)) / root.chips.length
+                height: root.chipHeight
                 icon: modelData.icon
                 spinning: modelData.spinning === true
                 text: modelData.text

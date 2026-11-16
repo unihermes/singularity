@@ -1,6 +1,7 @@
-// A large row for a session action (Lock, Reboot, Shut Down): a big glyph,
-// the title with a caption under it, and a chevron slot at the end for
-// `more`. `confirmText` makes it two clicks, armed alert-red for 3s.
+// A large boxed row for a session action (Lock, Reboot, Shut Down): a big
+// glyph, the title with a caption under it, and a chevron at the end for
+// `more`, whose options (children) open inside the box. `confirmText`
+// makes it two clicks, armed alert-red for 3s.
 
 import QtQuick
 import "../services"
@@ -20,21 +21,47 @@ Item {
     signal activated()
     signal moreClicked()
 
+    default property alias options: optionsBox.data
+    readonly property real headHeight: Theme.rowHeightTall * 2
+
     width: parent ? parent.width : 0
-    implicitHeight: Theme.rowHeightTall * 2
+    implicitHeight: headHeight + (root.expanded && optionsBox.childrenRect.height > 0
+        ? optionsBox.childrenRect.height + Theme.spaceM : 0)
 
     Rectangle {
+        id: box
+        readonly property color edge: root.armed ? Theme.alert
+            : mouse.containsMouse ? Theme.strokeHover : Theme.stroke
         anchors.fill: parent
-        anchors.leftMargin: -Theme.spaceXs
-        anchors.rightMargin: -Theme.spaceXs
         radius: Theme.radiusInner
-        color: mouse.containsMouse ? Theme.hoverFill : "transparent"
+        color: Theme.frameCustom && Theme.frameStyle === "notch" ? "transparent"
+            : root.armed ? Qt.rgba(Theme.alert.r, Theme.alert.g, Theme.alert.b, 0.12)
+            : Theme.controlFill(mouse.containsMouse ? Theme.hoverFillSoft : "transparent")
+        border.width: Theme.controlBorder(edge)
+        border.color: Theme.controlStroke(edge)
+
+        ControlEdge {
+            visible: Theme.controlStyle === "channel" || Theme.controlStyle === "double" || Theme.frameCustom
+            ground: Theme.frameStyle === "notch" ? box.color : "transparent"
+            stroke: box.edge; radius: box.radius
+            lit: false
+        }
+    }
+
+    Item {
+        id: optionsBox
+        visible: root.expanded
+        x: Theme.spaceM
+        y: root.headHeight - Theme.spaceXs
+        width: parent.width - Theme.spaceM * 2
+        height: childrenRect.height
     }
 
     Text {
         id: glyph
         anchors.left: parent.left
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.leftMargin: Theme.spaceM
+        y: (root.headHeight - height) / 2
         width: Theme.iconCell * 1.5
         horizontalAlignment: Text.AlignHCenter
         text: root.icon
@@ -48,7 +75,7 @@ Item {
         anchors.leftMargin: Theme.spaceM
         anchors.right: moreBtn.visible ? moreBtn.left : parent.right
         anchors.rightMargin: Theme.spaceM
-        anchors.verticalCenter: parent.verticalCenter
+        y: (root.headHeight - height) / 2
         spacing: 2
         Text {
             width: parent.width
@@ -71,7 +98,8 @@ Item {
 
     MouseArea {
         id: mouse
-        anchors.fill: parent
+        width: parent.width
+        height: root.headHeight
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onClicked: {
@@ -85,7 +113,8 @@ Item {
         id: moreBtn
         visible: root.more
         anchors.right: parent.right
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.rightMargin: Theme.spaceS
+        y: (root.headHeight - height) / 2
         implicitWidth: Theme.rowHeightTall * 1.5
         implicitHeight: Theme.rowHeightTall * 1.5
         glyphSize: Theme.fontIconSize * 1.6
