@@ -11,10 +11,9 @@
 //
 // mode, as the Code tab's chip sets it, picks the approval policy and the
 // sandbox: default (and plan, which Codex lacks) asks before any write or
-// command outside read-only, acceptEdits lets it write in the folder and
-// asks to go further, auto never asks (it stays in the folder). Writing, it
-// also reaches the network and the folder's git directory (when that sits
-// above it), so it can commit and push.
+// command outside read-only, acceptEdits allows writes and asks for commands,
+// and auto allows both without asking. Write modes can access any folder and
+// the network, including a project's git directory for commits and pushes.
 
 import Quickshell
 import Quickshell.Io
@@ -37,26 +36,9 @@ AiSession {
 
     readonly property string approval: readOnly || mode === "auto" ? "never" : "on-request"
     readonly property bool writes: !readOnly && (mode === "acceptEdits" || mode === "auto")
-    readonly property string sandbox: writes ? "workspace-write" : "read-only"
+    readonly property string sandbox: writes ? "danger-full-access" : "read-only"
     readonly property var sandboxPolicy: sandbox === "read-only" ? { type: "readOnly" }
-        : { type: "workspaceWrite", writableRoots: gitDirs, networkAccess: true }
-
-    // the folder's git and common directories, absolute
-    property var gitDirs: []
-    function findGit() {
-        gitProbe.running = false
-        if (cwd !== "") gitProbe.running = true
-    }
-    onCwdChanged: findGit()
-    Component.onCompleted: findGit()
-    Process {
-        id: gitProbe
-        command: ["git", "-C", root.cwd, "rev-parse", "--path-format=absolute", "--git-dir", "--git-common-dir"]
-        // nothing on stdout outside a repo
-        stdout: StdioCollector {
-            onStreamFinished: root.gitDirs = text.split("\n").filter((d, i, a) => d !== "" && a.indexOf(d) === i)
-        }
-    }
+        : { type: "dangerFullAccess" }
 
     // --- sending ---------------------------------------------------------
 
