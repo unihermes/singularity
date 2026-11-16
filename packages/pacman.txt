@@ -39,6 +39,11 @@ python-gobject
 python-icalendar
 python-recurring-ical-events
 
+# VSCodium's R extension needs R (gcc-fortran builds its CRAN packages, e.g.
+# languageserver and IRkernel, into ~/.local/share/R)
+r
+gcc-fortran
+
 # compositor + session
 # ly is a TUI greeter that reads the wayland-sessions entry hyprland ships,
 # so Hyprland shows up as a choice with no extra config. If pacman cannot
