@@ -12,6 +12,7 @@ import "../services/Format.js" as Format
 FlyoutPanel {
     id: controlCentre
     flyout: "controlcentre"
+    sectionFrames: Theme.glass
     menuWidth: Theme.style === "pane" ? Theme.flyoutMenuWidth + Theme.fs(360)
         : Theme.glass ? Theme.flyoutMenuWidth + Theme.fs(60) : Theme.flyoutMenuWidth + Theme.fs(120)
     // first module in the bar -- run it into the left corner

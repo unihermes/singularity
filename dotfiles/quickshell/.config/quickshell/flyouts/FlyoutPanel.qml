@@ -29,6 +29,10 @@ OverlayWindow {
 
     property real menuWidth: 240
     property bool compactMenu: false
+    // false: no frame behind each run of rows, the content's own outlines
+    // and the panel's are all there is
+    property bool sectionFrames: true
+    readonly property bool framedRuns: !compactMenu && sectionFrames
     // Exclusive keyboard focus instead of OnDemand; fixed while it's up
     property bool keyboardExclusive: false
     // distance from the bar's screen edge to the near edge of the box
@@ -106,14 +110,14 @@ OverlayWindow {
     // content is padded to clear both frames.
     readonly property int sectionGap: Theme.sectionInset - Theme.channelWidth
     readonly property int sectionPadY: Theme.spaceXs
-    readonly property int padX: compactMenu ? Theme.channelWidth + Theme.spaceS
+    readonly property int padX: !framedRuns ? Theme.channelWidth + Theme.spaceS
         : Theme.channelWidth * 2 + sectionGap + Theme.spaceM
-    readonly property int padY: compactMenu ? Theme.channelWidth + Theme.spaceS
+    readonly property int padY: !framedRuns ? Theme.channelWidth + Theme.spaceS
         : Theme.channelWidth * 2 + sectionGap + sectionPadY
     // Grown, the edge against the bar has no outline of its own (the group's
     // runs straight on into the box's), so it leaves out a channel's room.
     readonly property int padNear: grown ? padY - Theme.channelWidth : padY
-    readonly property int padTop: (atBottom ? padY : padNear) - (compactMenu ? 0 : Theme.spaceXs)
+    readonly property int padTop: (atBottom ? padY : padNear) - (framedRuns ? Theme.spaceXs : 0)
 
     // Trailing section breaks separate rows but do not add a bottom gutter.
     readonly property Item lastContent: {
@@ -128,7 +132,7 @@ OverlayWindow {
         : lastContent ? lastContent.y + lastContent.height : 0
     // Button regions have no row padding inside their section frame.
     readonly property real padBottom: (atBottom ? padNear : padY)
-        - (!compactMenu && lastContent && lastContent.isChipRegion === true
+        - (framedRuns && lastContent && lastContent.isChipRegion === true
             ? Theme.channelWidth + sectionPadY - Theme.sectionDepth : 0)
 
     visible: open || reveal > 0
@@ -276,7 +280,7 @@ OverlayWindow {
             Absorber {}
 
             SectionRuns {
-                visible: !root.compactMenu
+                visible: root.framedRuns
                 x: Theme.channelWidth + root.sectionGap
                 width: box.width - x * 2
                 height: box.height
@@ -292,7 +296,7 @@ OverlayWindow {
                 width: parent.width - root.padX * 2
                 spacing: root.compactMenu ? 0 : Theme.flyoutSpacing
                 // FlyoutHeading and FlyoutDivider make room for the sections
-                readonly property bool sectioned: !root.compactMenu
+                readonly property bool sectioned: root.framedRuns
                 readonly property bool compactMenu: root.compactMenu
 
                 // the marker FlyoutHeading looks for to tell a flyout from a window
