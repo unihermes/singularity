@@ -39,6 +39,8 @@ Column {
         width: parent ? parent.width : 0
         height: Theme.rowHeightTall + 4
         readonly property real spacing: Theme.spaceS
+        // the icon button's own outline stays clear of the row's
+        readonly property real inset: Theme.spaceS
         readonly property bool hot: rowHover.hovered && level.chevron
         readonly property color edge: hot ? Theme.strokeHover : "transparent"
 
@@ -62,6 +64,7 @@ Column {
         IconButton {
             id: glyphBtn
             anchors.left: parent.left
+            anchors.leftMargin: level.inset
             anchors.verticalCenter: parent.verticalCenter
             icon: level.icon
             warn: level.warn
@@ -71,7 +74,7 @@ Column {
             anchors.left: glyphBtn.right
             anchors.leftMargin: level.spacing
             anchors.verticalCenter: parent.verticalCenter
-            width: level.width - glyphBtn.width - more.width - level.spacing * 2
+            width: level.width - level.inset - glyphBtn.width - more.width - level.spacing * 2
             value: level.value
             opacity: level.warn ? 0.5 : 1
             onMoved: v => level.moved(v)
