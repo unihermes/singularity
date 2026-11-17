@@ -40,6 +40,18 @@ SettingsPage {
 
     function bootRead() { bootReader.running = true }
 
+    // the OS's logo (Nerd Font), by entry id and title
+    function bootIcon(id, title) {
+        var t = (id + " " + title).toLowerCase()
+        if (/windows/.test(t)) return "󰖳"
+        if (/osx|macos/.test(t)) return "󰀵"
+        if (/arch/.test(t)) return "󰣇"
+        if (/fedora/.test(t)) return "󰣛"
+        if (/ubuntu/.test(t)) return "󰕈"
+        if (/debian/.test(t)) return "󰣚"
+        return "󰌽"
+    }
+
     function bootName(e) {
         if (e.id === "auto-windows") return "Windows"
         if (e.id === "auto-osx") return "macOS"
@@ -58,10 +70,13 @@ SettingsPage {
                 try { fw = JSON.parse(lines[1]) } catch (e) { fw = {} }
                 if (!Array.isArray(list)) list = []
                 var oses = list.filter(e => e.type !== "loader" && e.type !== "auto" || /^auto-(windows|osx)$/.test(e.id))
-                var entries = oses.map(e => ({ id: e.id, text: page.bootName(e) }))
+                var entries = oses.map(e => {
+                    var name = page.bootName(e)
+                    return { id: e.id, text: name, icon: page.bootIcon(e.id, name) }
+                })
                 var d = oses.find(e => e.isDefault), s = oses.find(e => e.isSelected)
                 var fwWindows = fw.windows === true && !oses.some(e => e.id === "auto-windows")
-                if (fwWindows) entries.push({ id: "windows", text: "Windows" })
+                if (fwWindows) entries.push({ id: "windows", text: "Windows", icon: "󰖳" })
                 page.bootEntries = entries
                 page.bootDefault = fwWindows && fw.first ? "windows" : d ? d.id : ""
                 page.bootSelected = s ? s.id : ""
@@ -222,7 +237,7 @@ SettingsPage {
             visible: page.bootEntries.length <= 3
             anchors.right: parent.right
             fill: false
-            model: page.bootEntries.map(b => ({ value: b.id, text: b.text }))
+            model: page.bootEntries.map(b => ({ value: b.id, text: b.text, icon: b.icon }))
             current: page.bootDefault
             enabled: !page.bootBusy
             onPicked: v => page.bootSet(v)
@@ -233,6 +248,7 @@ SettingsPage {
             width: Theme.fit(220)
             model: page.bootEntries.map(b => b.id)
             labelFor: v => (page.bootEntries.find(b => b.id === v) || { text: v }).text
+            glyphFor: v => (page.bootEntries.find(b => b.id === v) || { icon: "" }).icon
             current: page.bootDefault
             enabled: !page.bootBusy
             onPicked: v => page.bootSet(v)

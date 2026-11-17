@@ -14,7 +14,8 @@ Item {
     id: root
 
     property string label: ""
-    // [{ value, text }], or plain values named by labelFor
+    // [{ value, text, icon }] (icon: an optional icon-font glyph before the
+    // text), or plain values named by labelFor
     property var model: []
     property var labelFor: v => String(v)
     property var current
@@ -27,6 +28,7 @@ Item {
 
     function valueOf(m) { return m !== null && typeof m === "object" && "value" in m ? m.value : m }
     function textOf(m) { return m !== null && typeof m === "object" && "text" in m ? m.text : labelFor(m) }
+    function iconOf(m) { return m !== null && typeof m === "object" && m.icon ? m.icon : "" }
 
     width: (fill || label !== "") && parent ? parent.width : implicitWidth
     implicitWidth: segs.implicitWidth + root.edge * 2
@@ -99,7 +101,7 @@ Item {
                     readonly property bool hot: segMouse.containsMouse
 
                     height: segs.height
-                    implicitWidth: segText.implicitWidth + Theme.spaceL * 2
+                    implicitWidth: segFace.implicitWidth + Theme.spaceL * 2
                     // shared out evenly when the strip is stretched
                     width: root.fill
                         ? (strip.width - root.edge * 2 - root.gap * (rep.count - 1)) / rep.count : implicitWidth
@@ -144,12 +146,12 @@ Item {
                         color: Theme.stroke
                     }
 
-                    Text {
-                        id: segText
+                    Row {
+                        id: segFace
                         anchors.verticalCenter: parent.verticalCenter
                         x: Math.round((parent.width - width) / 2)
-                        text: root.textOf(seg.modelData)
-                        color: {
+                        spacing: Theme.spaceS
+                        readonly property color ink: {
                             var k = root.kind
                             if (seg.on) {
                                 if (k === "double" || k === "glass") return Theme.textStrong
@@ -157,9 +159,23 @@ Item {
                             }
                             return seg.hot ? Theme.textStrong : Theme.text
                         }
-                        font.family: Theme.fontText
-                        font.weight: Theme.weightBody
-                        font.pixelSize: Theme.fontSmall
+
+                        Text {
+                            visible: text !== ""
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root.iconOf(seg.modelData)
+                            color: segFace.ink
+                            font.family: Theme.fontText
+                            font.pixelSize: Theme.fontIconSize
+                        }
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root.textOf(seg.modelData)
+                            color: segFace.ink
+                            font.family: Theme.fontText
+                            font.weight: Theme.weightBody
+                            font.pixelSize: Theme.fontSmall
+                        }
                     }
 
                     MouseArea {
