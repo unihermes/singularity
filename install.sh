@@ -367,7 +367,8 @@ put /usr/local/lib/singularity/singularity-vpn
 put /usr/share/polkit-1/actions/org.singularity.vpn.policy
 
 # singularity-boot: lists systemd-boot's entries and sets the default
-# (LoaderEntryDefault) for Settings > Startup, through pkexec with a polkit
+# (LoaderEntryDefault, or Windows' own entry first in the firmware BootOrder)
+# for Settings > Startup, through pkexec with a polkit
 # action for the local session. Root-owned in /usr/local/lib/singularity, off PATH.
 if [[ -n $esp ]]; then
   log "installing the boot entry helper"

@@ -1,5 +1,6 @@
-// Which OS boots (systemd-boot's default, via install.sh's singularity-boot
-// helper and pkexec; shown only with a second OS), a one-off restart into
+// Which OS boots (systemd-boot's default, or Windows' own firmware entry
+// first in BootOrder, via install.sh's singularity-boot helper and pkexec;
+// shown only with a second OS), a one-off restart into
 // another OS or the BIOS, ly's autologin (singularity-autologin, asks for
 // the password), and what runs at login: ~/.config/autostart and the opt-in
 // /etc/xdg/autostart entries (autostart.sh has the rules). Services are
@@ -29,7 +30,8 @@ SettingsPage {
 
     readonly property string bootHelper: "/usr/local/lib/singularity/singularity-boot"
     // [{ id, text }]: the entries an OS boots from, in menu order -- not the
-    // firmware setup, the EFI default loader or the power entries
+    // firmware setup, the EFI default loader or the power entries -- then
+    // "windows" for Windows' own firmware entry on another disk
     property var bootEntries: []
     property string bootDefault: ""
     // what's running now, to say so under the choice
@@ -49,13 +51,19 @@ SettingsPage {
         command: ["sh", "-c", "[ -x " + page.bootHelper + " ] && exec pkexec " + page.bootHelper + " list"]
         stdout: StdioCollector {
             onStreamFinished: {
-                var list
-                try { list = JSON.parse(text) } catch (e) { list = [] }
+                // line 1: bootctl's entries; line 2: Windows' firmware entry
+                var lines = text.trim().split("\n")
+                var list, fw
+                try { list = JSON.parse(lines[0]) } catch (e) { list = [] }
+                try { fw = JSON.parse(lines[1]) } catch (e) { fw = {} }
                 if (!Array.isArray(list)) list = []
                 var oses = list.filter(e => e.type !== "loader" && e.type !== "auto" || /^auto-(windows|osx)$/.test(e.id))
-                page.bootEntries = oses.map(e => ({ id: e.id, text: page.bootName(e) }))
+                var entries = oses.map(e => ({ id: e.id, text: page.bootName(e) }))
                 var d = oses.find(e => e.isDefault), s = oses.find(e => e.isSelected)
-                page.bootDefault = d ? d.id : ""
+                var fwWindows = fw.windows === true && !oses.some(e => e.id === "auto-windows")
+                if (fwWindows) entries.push({ id: "windows", text: "Windows" })
+                page.bootEntries = entries
+                page.bootDefault = fwWindows && fw.first ? "windows" : d ? d.id : ""
                 page.bootSelected = s ? s.id : ""
             }
         }

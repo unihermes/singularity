@@ -1,25 +1,73 @@
 #!/bin/sh
-# singularity-boot list            systemd-boot's entries, as bootctl's JSON
-# singularity-boot default ENTRY   boot ENTRY when nothing else is picked
+# singularity-boot list            systemd-boot's entries, as bootctl's JSON, then
+#                                  {"windows":bool,"first":bool} for Windows'
+#                                  own firmware entry (on another disk's ESP)
+# singularity-boot default ENTRY   boot systemd-boot's ENTRY when nothing else is
+#                                  picked; Linux Boot Manager goes first in BootOrder
+# singularity-boot default windows boot Windows' own firmware entry first instead
 # singularity-boot next-windows    boot Windows' own firmware entry, once
 set -eu
+
+# While this exists, Windows is the chosen default and linux-bootmgr-first
+# leaves BootOrder alone.
+marker=/var/lib/singularity/windows-first
+
+esp_partuuid() {
+  esp=$(bootctl -p) && lsblk -no PARTUUID "$(findmnt -no SOURCE -T "$esp")"
+}
+
+boot_num() { sed -n 's/^Boot\([0-9A-Fa-f]\{4\}\).*/\1/p' | head -n1; }
+
+# Windows' own Boot Manager entry, not one on systemd-boot's ESP
+windows_num() {
+  efibootmgr | grep -iF 'Windows Boot Manager' | grep -viF "GPT,$(esp_partuuid)," | boot_num
+}
+
+linux_num() {
+  efibootmgr | grep -iF "GPT,$(esp_partuuid)," | grep -iF 'EFI\systemd\systemd-bootx64.efi' | boot_num
+}
+
+first_num() { efibootmgr | sed -n 's/^BootOrder: \([0-9A-Fa-f]\{4\}\).*/\1/p'; }
+
+# moves entry $1 to the front of BootOrder
+put_first() {
+  order=$(efibootmgr | sed -n 's/^BootOrder: //p')
+  rest=$(printf '%s\n' "$order" | tr , '\n' | grep -vix "$1" | paste -sd, -)
+  efibootmgr -q -o "$1${rest:+,$rest}"
+}
+
 case ${1:-} in
-  list) exec bootctl list --json=short --no-pager ;;
+  list)
+    bootctl list --json=short --no-pager
+    win=$(windows_num 2>/dev/null || true)
+    if [ -n "$win" ]; then
+      first=false
+      [ "$(first_num | tr a-f A-F)" = "$(printf %s "$win" | tr a-f A-F)" ] && first=true
+      echo "{\"windows\":true,\"first\":$first}"
+    else
+      echo '{"windows":false,"first":false}'
+    fi ;;
   default)
     id=${2:-}
     case $id in
       ''|*[!A-Za-z0-9._@+-]*) echo "not an entry id: $id" >&2; exit 2 ;;
     esac
+    if [ "$id" = windows ]; then
+      num=$(windows_num)
+      [ -n "$num" ] || { echo "no Windows entry outside this ESP" >&2; exit 1; }
+      mkdir -p "${marker%/*}" && touch "$marker"
+      put_first "$num"
+      exit 0
+    fi
     bootctl list --json=short --no-pager | grep -Fq "\"id\":\"$id\"" \
       || { echo "systemd-boot has no entry $id" >&2; exit 1; }
-    exec bootctl set-default "$id" ;;
+    bootctl set-default "$id"
+    rm -f "$marker"
+    num=$(linux_num)
+    [ -z "$num" ] || put_first "$num" ;;
   next-windows)
-    # Windows' own Boot Manager entry (on its own disk's ESP), not the copy
-    # on systemd-boot's ESP, so Windows starts from its own BCD.
-    esp=$(bootctl -p) && partuuid=$(lsblk -no PARTUUID "$(findmnt -no SOURCE -T "$esp")")
-    num=$(efibootmgr | grep -iF 'Windows Boot Manager' | grep -viF "GPT,$partuuid," \
-        | sed -n 's/^Boot\([0-9A-Fa-f]\{4\}\).*/\1/p' | head -n1)
+    num=$(windows_num)
     [ -n "$num" ] || { echo "no Windows entry outside this ESP" >&2; exit 1; }
     exec efibootmgr -q -n "$num" ;;
-  *) echo "usage: singularity-boot list | default ENTRY | next-windows" >&2; exit 2 ;;
+  *) echo "usage: singularity-boot list | default ENTRY|windows | next-windows" >&2; exit 2 ;;
 esac

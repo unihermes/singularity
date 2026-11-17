@@ -1,7 +1,9 @@
 #!/bin/bash
 # Puts systemd-boot's firmware entry on this machine's ESP first in BootOrder
-# (Windows moves its own Boot Manager back to the front).
+# (Windows moves its own Boot Manager back to the front), unless Windows is
+# the chosen default (singularity-boot default windows).
 set -euo pipefail
+[[ -e /var/lib/singularity/windows-first ]] && exit 0
 esp=$(bootctl -p 2>/dev/null) || exit 0
 partuuid=$(lsblk -no PARTUUID "$(findmnt -no SOURCE -T "$esp")" 2>/dev/null) || exit 0
 [[ -n $partuuid ]] || exit 0
