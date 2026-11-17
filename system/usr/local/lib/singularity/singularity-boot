@@ -1,6 +1,7 @@
 #!/bin/sh
 # singularity-boot list            systemd-boot's entries, as bootctl's JSON
 # singularity-boot default ENTRY   boot ENTRY when nothing else is picked
+# singularity-boot next-windows    boot Windows' own firmware entry, once
 set -eu
 case ${1:-} in
   list) exec bootctl list --json=short --no-pager ;;
@@ -12,5 +13,13 @@ case ${1:-} in
     bootctl list --json=short --no-pager | grep -Fq "\"id\":\"$id\"" \
       || { echo "systemd-boot has no entry $id" >&2; exit 1; }
     exec bootctl set-default "$id" ;;
-  *) echo "usage: singularity-boot list | default ENTRY" >&2; exit 2 ;;
+  next-windows)
+    # Windows' own Boot Manager entry (on its own disk's ESP), not the copy
+    # on systemd-boot's ESP, so Windows starts from its own BCD.
+    esp=$(bootctl -p) && partuuid=$(lsblk -no PARTUUID "$(findmnt -no SOURCE -T "$esp")")
+    num=$(efibootmgr | grep -iF 'Windows Boot Manager' | grep -viF "GPT,$partuuid," \
+        | sed -n 's/^Boot\([0-9A-Fa-f]\{4\}\).*/\1/p' | head -n1)
+    [ -n "$num" ] || { echo "no Windows entry outside this ESP" >&2; exit 1; }
+    exec efibootmgr -q -n "$num" ;;
+  *) echo "usage: singularity-boot list | default ENTRY | next-windows" >&2; exit 2 ;;
 esac

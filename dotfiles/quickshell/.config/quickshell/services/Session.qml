@@ -42,7 +42,8 @@ Singleton {
     }
 
     // [{ act, label, icon }]: one-off reboots (another OS, firmware setup)
-    // via logind, no helper or password; entries from systemd-boot via logind
+    // via logind, no helper or password; entries from systemd-boot via logind,
+    // Windows on another disk via its firmware entry
     property var rebootTargets: []
 
     Process {
@@ -53,7 +54,8 @@ Singleton {
                     org.freedesktop.login1.Manager "$2" 2>/dev/null || echo '{}'; }
             m call CanRebootToBootLoaderEntry
             m get-property BootLoaderEntries
-            m call CanRebootToFirmwareSetup`]
+            m call CanRebootToFirmwareSetup
+            efibootmgr 2>/dev/null | grep -qF 'Windows Boot Manager' && echo '{"data":["yes"]}' || echo '{}'`]
         stdout: StdioCollector {
             onStreamFinished: {
                 const out = text.trim().split("\n").map(l => {
@@ -64,6 +66,9 @@ Singleton {
                 let t = []
                 if (can(out[0]) && Array.isArray(out[1]))
                     t = out[1].filter(id => oses[id]).map(id => ({ act: id, label: oses[id][0], icon: oses[id][1] }))
+                // Windows on another disk: its own firmware entry, once (singularity-boot)
+                if (!t.some(e => e.act === "auto-windows") && can(out[3]))
+                    t.push({ act: "windows", label: "Windows", icon: "󰖳" })
                 if (can(out[2])) t.push({ act: "firmware", label: "BIOS", icon: "󰘚" })
                 root.rebootTargets = t
             }
@@ -72,6 +77,9 @@ Singleton {
 
     function rebootInto(act) {
         if (act === "firmware") Quickshell.execDetached(["systemctl", "reboot", "--firmware-setup"])
+        else if (act === "windows")
+            Quickshell.execDetached(["sh", "-c",
+                "pkexec /usr/local/lib/singularity/singularity-boot next-windows && systemctl reboot"])
         else Quickshell.execDetached(["systemctl", "reboot", "--boot-loader-entry=" + act])
     }
 

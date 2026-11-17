@@ -386,13 +386,26 @@ if [[ -n $esp && -d /sys/firmware/efi ]]; then
     put /etc/systemd/system/linux-bootmgr-first.service
     sudo systemctl daemon-reload
     sudo systemctl enable linux-bootmgr-first.service
-    # systemd-boot only lists Windows found on its own ESP; windows-esp-sync
-    # copies it over from another disk's ESP, again at every boot.
-    log "making Windows bootable from systemd-boot"
-    put /usr/local/lib/singularity/windows-esp-sync
-    put /etc/systemd/system/windows-esp-sync.service
+  fi
+  # windows-esp-sync's copy of Windows Boot Manager on systemd-boot's ESP made
+  # AMI firmware treat that disk as Windows' and delete the Linux entry; remove
+  # the service, the copy and the firmware entry it grew. Windows on its own
+  # disk boots from its own firmware entry (singularity-boot next-windows).
+  if [[ -e /etc/systemd/system/windows-esp-sync.service ]]; then
+    log "removing the Windows Boot Manager copy from systemd-boot's ESP"
+    sudo systemctl disable windows-esp-sync.service 2>/dev/null || true
+    sudo rm -f /etc/systemd/system/windows-esp-sync.service /usr/local/lib/singularity/windows-esp-sync
     sudo systemctl daemon-reload
-    sudo systemctl enable --now windows-esp-sync.service
+  fi
+  if sudo test -f "$esp/EFI/Microsoft/.singularity-sync"; then
+    sudo rm -rf "$esp/EFI/Microsoft"
+    partuuid=$(lsblk -no PARTUUID "$(findmnt -no SOURCE -T "$esp")")
+    for num in $(efibootmgr | grep -iF "GPT,$partuuid," | grep -iF 'EFI\Microsoft\Boot\bootmgfw.efi' |
+                 sed -n 's/^Boot\([0-9A-Fa-f]\{4\}\).*/\1/p'); do
+      sudo efibootmgr -q -b "$num" -B
+    done
+    # puts the Linux Boot Manager entry back if the firmware already dropped it
+    sudo bootctl install
   fi
 fi
 
