@@ -115,19 +115,19 @@ hl.on("window.open", function(win)
 end)
 hl.on("window.fullscreen", function() coverBarLater(500) end)
 
--- Desktop: Power Saver while any game is open, the picked profile back
--- after the last one closes (unless it was changed meanwhile). The 7700X
--- runs a game's shader compiling at 85 °C on Balanced and ~57 °C on Power
--- Saver, and games here are GPU-bound, so it costs no frames.
+-- Desktop: Balanced while any game is open if the profile was Power Saver
+-- (which caps the 7700X at 4.5 GHz and stutters CPU-heavy games such as
+-- Overwatch), the picked profile back after the last one closes (unless it
+-- was changed meanwhile).
 if S.state("machine", "") == "desktop" then
     local PPD = "busctl %s-property org.freedesktop.UPower.PowerProfiles /org/freedesktop/UPower/PowerProfiles"
         .. " org.freedesktop.UPower.PowerProfiles ActiveProfile"
     local saved = (os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/singularity-game-profile"
     local get = PPD:format("get") .. " | cut -d'\"' -f2"
-    local hold = "p=$(" .. get .. "); [ \"$p\" != power-saver ] && [ ! -f " .. saved .. " ]"
-        .. " && echo \"$p\" > " .. saved .. " && " .. PPD:format("set") .. " s power-saver"
+    local hold = "p=$(" .. get .. "); [ \"$p\" = power-saver ] && [ ! -f " .. saved .. " ]"
+        .. " && echo \"$p\" > " .. saved .. " && " .. PPD:format("set") .. " s balanced"
     -- (not "[": exec_cmd reads a leading [...] as window rules)
-    local release = "test -f " .. saved .. " && { [ \"$(" .. get .. ")\" = power-saver ] && "
+    local release = "test -f " .. saved .. " && { [ \"$(" .. get .. ")\" = balanced ] && "
         .. PPD:format("set") .. " s \"$(cat " .. saved .. ")\"; rm -f " .. saved .. "; }"
 
     local holding  -- nil until the first sync, so a reload settles a left-over hold
