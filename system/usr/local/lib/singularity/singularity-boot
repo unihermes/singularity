@@ -1,7 +1,8 @@
 #!/bin/sh
 # singularity-boot list            systemd-boot's entries, as bootctl's JSON, then
 #                                  {"windows":bool,"first":bool} for Windows'
-#                                  own firmware entry (on another disk's ESP)
+#                                  own firmware entry (on another disk's ESP),
+#                                  or for that ESP when the firmware lost the entry
 # singularity-boot default ENTRY   boot systemd-boot's ENTRY when nothing else is
 #                                  picked; Linux Boot Manager goes first in BootOrder
 # singularity-boot default windows boot Windows' own firmware entry first instead
@@ -27,6 +28,41 @@ linux_num() {
   efibootmgr | grep -iF "GPT,$(esp_partuuid)," | grep -iF 'EFI\systemd\systemd-bootx64.efi' | boot_num
 }
 
+# another ESP that holds Windows Boot Manager, as its device path
+windows_esp() {
+  own=$(esp_partuuid)
+  lsblk -nrpo NAME,PARTTYPE,PARTUUID | while read -r dev type uuid; do
+    [ "$type" = c12a7328-f81f-11d2-ba4b-00a0c93ec93b ] && [ "$uuid" != "$own" ] || continue
+    dir=$(findmnt -no TARGET "$dev" | head -n1)
+    tmp=
+    if [ -z "$dir" ]; then
+      tmp=$(mktemp -d) && mount -o ro "$dev" "$tmp" 2>/dev/null || { rmdir "$tmp"; continue; }
+      dir=$tmp
+    fi
+    found=false
+    [ -f "$dir/EFI/Microsoft/Boot/bootmgfw.efi" ] && found=true
+    [ -z "$tmp" ] || { umount "$tmp"; rmdir "$tmp"; }
+    if $found; then echo "$dev"; return; fi
+  done
+}
+
+# Windows' own entry, recreated on its ESP (at the end of BootOrder) when the
+# firmware has dropped it
+ensure_windows_num() {
+  num=$(windows_num)
+  if [ -z "$num" ]; then
+    dev=$(windows_esp)
+    [ -n "$dev" ] || return 0
+    order=$(efibootmgr | sed -n 's/^BootOrder: //p')
+    efibootmgr -q -c -d "/dev/$(lsblk -no PKNAME "$dev")" \
+      -p "$(cat "/sys/class/block/${dev##*/}/partition")" \
+      -L 'Windows Boot Manager' -l '\EFI\Microsoft\Boot\bootmgfw.efi'
+    num=$(windows_num)
+    [ -z "$num" ] || efibootmgr -q -o "${order:+$order,}$num"
+  fi
+  echo "$num"
+}
+
 first_num() { efibootmgr | sed -n 's/^BootOrder: \([0-9A-Fa-f]\{4\}\).*/\1/p'; }
 
 # moves entry $1 to the front of BootOrder
@@ -44,6 +80,8 @@ case ${1:-} in
       first=false
       [ "$(first_num | tr a-f A-F)" = "$(printf %s "$win" | tr a-f A-F)" ] && first=true
       echo "{\"windows\":true,\"first\":$first}"
+    elif [ -n "$(windows_esp 2>/dev/null || true)" ]; then
+      echo '{"windows":true,"first":false}'
     else
       echo '{"windows":false,"first":false}'
     fi ;;
@@ -53,7 +91,7 @@ case ${1:-} in
       ''|*[!A-Za-z0-9._@+-]*) echo "not an entry id: $id" >&2; exit 2 ;;
     esac
     if [ "$id" = windows ]; then
-      num=$(windows_num)
+      num=$(ensure_windows_num)
       [ -n "$num" ] || { echo "no Windows entry outside this ESP" >&2; exit 1; }
       mkdir -p "${marker%/*}" && touch "$marker"
       put_first "$num"
@@ -66,7 +104,7 @@ case ${1:-} in
     num=$(linux_num)
     [ -z "$num" ] || put_first "$num" ;;
   next-windows)
-    num=$(windows_num)
+    num=$(ensure_windows_num)
     [ -n "$num" ] || { echo "no Windows entry outside this ESP" >&2; exit 1; }
     exec efibootmgr -q -n "$num" ;;
   *) echo "usage: singularity-boot list | default ENTRY|windows | next-windows" >&2; exit 2 ;;
