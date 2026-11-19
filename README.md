@@ -55,8 +55,8 @@ The repo is the stock setup; changes made on a machine never show up in `git sta
 - Your own Hyprland overrides go in `~/.local/state/singularity/custom.lua` (run last),
   shell additions in `~/.bashrc.local`.
 - Per-monitor fixes go in `~/.local/state/singularity/display-fixes.lua`.
-- To keep the greeter off a second monitor, add `video=<connector>:d` to the kernel
-  command line and rerun `install.sh`.
+- The greeter shows only on the largest monitor; smaller ones join at login. To also
+  keep it off a same-size monitor, add `video=<connector>:d` to the kernel command line.
 - Codex notifications: set `notify = ["python3", "<home>/.config/singularity/codex-notify.py"]`
   in `~/.codex/config.toml`.
 

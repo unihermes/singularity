@@ -797,9 +797,9 @@ if [[ -n $dm_unit ]]; then
   if [[ -f /etc/ly/config.ini ]]; then
     log "theming ly"
     put /etc/ly/singularity.sh
-    # A monitor named video=<connector>:d on the cmdline is held off the
-    # console (which sizes to its smallest screen); outputs.sh hands it to
-    # the session at login and back at logout.
+    # The console sizes to its smallest screen, so outputs.sh holds monitors
+    # smaller than the largest (and any named video=<connector>:d) off it,
+    # hands them to the session at login and holds them off again at logout.
     put /etc/ly/outputs.sh
     put /etc/ly/login.sh
     tmp=$(mktemp)
