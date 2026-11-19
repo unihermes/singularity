@@ -115,36 +115,4 @@ hl.on("window.open", function(win)
 end)
 hl.on("window.fullscreen", function() coverBarLater(500) end)
 
--- Desktop: Balanced while any game is open if the profile was Power Saver
--- (which caps the 7700X at 4.5 GHz and stutters CPU-heavy games such as
--- Overwatch), the picked profile back after the last one closes (unless it
--- was changed meanwhile).
-if S.state("machine", "") == "desktop" then
-    local PPD = "busctl %s-property org.freedesktop.UPower.PowerProfiles /org/freedesktop/UPower/PowerProfiles"
-        .. " org.freedesktop.UPower.PowerProfiles ActiveProfile"
-    local saved = (os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/singularity-game-profile"
-    local get = PPD:format("get") .. " | cut -d'\"' -f2"
-    local hold = "p=$(" .. get .. "); [ \"$p\" = power-saver ] && [ ! -f " .. saved .. " ]"
-        .. " && echo \"$p\" > " .. saved .. " && " .. PPD:format("set") .. " s balanced"
-    -- (not "[": exec_cmd reads a leading [...] as window rules)
-    local release = "test -f " .. saved .. " && { [ \"$(" .. get .. ")\" = balanced ] && "
-        .. PPD:format("set") .. " s \"$(cat " .. saved .. ")\"; rm -f " .. saved .. "; }"
-
-    local holding  -- nil until the first sync, so a reload settles a left-over hold
-    local function syncProfile()
-        local any = false
-        for _, w in ipairs(hl.get_windows()) do
-            if isGame(w) then any = true break end
-        end
-        if any == holding then return end
-        holding = any
-        hl.exec_cmd(any and hold or release)
-    end
-    hl.on("hyprland.start", syncProfile)
-    hl.on("window.open", syncProfile)
-    -- once the closed window is off the list
-    hl.on("window.close", function() hl.timer(syncProfile, { timeout = 500, type = "oneshot" }) end)
-    syncProfile()
-end
-
 return sync
