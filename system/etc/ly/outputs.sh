@@ -4,7 +4,7 @@
 # every screen at the smallest one's size, so `off` holds off each connected
 # monitor whose preferred mode is smaller than the largest monitor's, plus any
 # named as video=<connector>:d on the kernel command line. The held names are
-# kept in $held for `on`.
+# kept in $held for `on`. `off` also grows the console to the main monitor.
 held=/run/singularity-ly-held
 state=${1:-off}
 
@@ -46,3 +46,22 @@ for n in $names; do
     if [ "$state" = off ]; then echo off; else echo detect; fi > "$s"
   done
 done
+
+# The console's text area stays at the smallest screen lit at boot, inside a
+# surface the size of the largest; with the smaller ones held off, grow every
+# VT to the whole surface so the greeter fills the main monitor.
+[ "$state" = off ] && [ -c /dev/fb0 ] && python3 -I - <<'EOF'
+import fcntl, struct
+GET, PUT, ACTIVATE_ALL = 0x4600, 0x4601, 64
+try:
+    with open('/dev/fb0', 'r+b', buffering=0) as fb:
+        var = bytearray(fcntl.ioctl(fb, GET, bytes(160)))
+        xres, yres, vx, vy = struct.unpack_from('4I', var)
+        if (xres, yres) != (vx, vy):
+            struct.pack_into('6I', var, 0, vx, vy, vx, vy, 0, 0)
+            struct.pack_into('I', var, 84, ACTIVATE_ALL)
+            fcntl.ioctl(fb, PUT, bytes(var))
+except OSError:
+    pass
+EOF
+exit 0
