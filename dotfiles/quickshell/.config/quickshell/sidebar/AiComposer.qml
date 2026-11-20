@@ -225,13 +225,15 @@ Column {
                 width: parent.width
                 height: Theme.rowHeightDense
                 radius: Theme.radiusInner
+                clip: true
                 color: lit || cmdMouse.containsMouse ? Theme.hoverFill : "transparent"
 
                 Text {
                     id: cmdName
                     x: Theme.spaceM
                     anchors.verticalCenter: parent.verticalCenter
-                    text: (root.shellQuery !== null ? "!" : "/") + cmdRow.modelData.name
+                    text: (root.shellQuery !== null ? "!" : "/") + cmdRow.modelData.name.replace(/\s*\n\s*/g, " ")
+                    maximumLineCount: 1
                     width: Math.min(implicitWidth, parent.width * 0.7)
                     elide: Text.ElideRight
                     color: cmdRow.lit ? Theme.textStrong : Theme.text
@@ -248,6 +250,7 @@ Column {
                     horizontalAlignment: Text.AlignRight
                     elide: Text.ElideRight
                     text: cmdRow.modelData.hint
+                    maximumLineCount: 1
                     color: Theme.subtext
                     font.family: Theme.fontText
                     font.weight: Theme.weightBody
