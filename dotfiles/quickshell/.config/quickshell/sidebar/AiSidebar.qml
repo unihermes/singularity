@@ -364,7 +364,7 @@ PanelWindow {
             Item {
                 id: middle
                 width: parent.width
-                height: Math.max(Theme.rowHeight * 4, col.height - col.fixedHeight)
+                height: Math.max(0, col.height - col.fixedHeight)
 
                 AiTranscript {
                     id: transcript
