@@ -18,6 +18,7 @@ import "../services"
 FlyoutPanel {
     id: root
     flyout: "devices"
+    compactMenu: true
     menuWidth: Theme.flyoutMenuWidth
 
     readonly property var notes: PhoneLink.connected ? PhoneLink.device.notifications : []

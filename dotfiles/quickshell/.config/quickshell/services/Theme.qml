@@ -491,7 +491,7 @@ Singleton {
         : moduleTaskbar ? moduleHeight : moduleHeight - 2
     // a tray icon's slot, tighter than a window's
     readonly property int trayIconSize: barFs(moduleTaskbar ? 20 : 16)
-    readonly property int traySlotW:    trayIconSize + spaceS * 2
+    readonly property int traySlotW:    trayIconSize + spaceM
     // gap between adjacent modules, the same on both sides of the bar
     readonly property int moduleGap:    resolved.moduleGap
     // the gauge modules' shared width, so their fills compare

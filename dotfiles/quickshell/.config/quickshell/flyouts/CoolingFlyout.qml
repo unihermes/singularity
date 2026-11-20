@@ -10,6 +10,7 @@ import "../services"
 FlyoutPanel {
     id: coolingFlyout
     flyout: "cooling"
+    compactMenu: true
     menuWidth: Theme.flyoutMenuWidth
 
     // the System window, for its Hardware page
