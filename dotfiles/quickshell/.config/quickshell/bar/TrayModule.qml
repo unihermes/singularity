@@ -21,7 +21,7 @@ ModuleFrame {
     hoverWhole: false
     // each icon carries the room either side of it as its own hit and
     // hover area, so the chip's padding gives that back
-    padH: Theme.modulePadH - (slotW - Theme.trayIconSize) / 2
+    padH: Theme.modulePadH + Theme.spaceS - (slotW - Theme.trayIconSize) / 2
     visible: trayRepeater.count > 0 && Settings.widgetVisible("tray")
 
     property bool drawerOpen: false
@@ -272,6 +272,8 @@ ModuleFrame {
             Text {
                 visible: trayFrame.isOwn(trayIcon.modelData)
                 anchors.centerIn: parent
+                width: Theme.trayIconSize
+                horizontalAlignment: Text.AlignHCenter
                 text: trayIcon.modelData === trayFrame.devicesItem
                     ? (trayFrame.devicesPhoneOn ? "󰾰" : "󰍽") : "󰈐"
                 font.family: Theme.fontIcon
