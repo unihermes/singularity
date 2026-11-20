@@ -21,7 +21,7 @@ ModuleFrame {
     hoverWhole: false
     // each icon carries the room either side of it as its own hit and
     // hover area, so the chip's padding gives that back
-    padH: Theme.modulePadH + Theme.spaceS - (slotW - Theme.trayIconSize) / 2
+    padH: Theme.modulePadH + Theme.spaceXs - (slotW - Theme.trayIconSize) / 2
     visible: trayRepeater.count > 0 && Settings.widgetVisible("tray")
 
     property bool drawerOpen: false
