@@ -269,18 +269,25 @@ ModuleFrame {
                 implicitSize: Theme.trayIconSize
             }
 
+            // the glyph is placed by its ink, which these fonts draw off
+            // the centre of the advance
             Text {
+                id: ownGlyph
                 visible: trayFrame.isOwn(trayIcon.modelData)
-                anchors.centerIn: parent
-                width: Theme.trayIconSize
-                horizontalAlignment: Text.AlignHCenter
+                x: Math.round((parent.width - glyphInk.tightBoundingRect.width) / 2 - glyphInk.tightBoundingRect.x)
+                anchors.verticalCenter: parent.verticalCenter
                 text: trayIcon.modelData === trayFrame.devicesItem
                     ? (trayFrame.devicesPhoneOn ? "󰾰" : "󰍽") : "󰈐"
                 font.family: Theme.fontIcon
-                font.pixelSize: Theme.trayIconSize
+                font.pixelSize: Math.round(Theme.trayIconSize * 1.15)
                 color: trayIcon.modelData === trayFrame.devicesItem
                     ? (Phone.unauthorized ? Theme.alert : Theme.text)
                     : Cooling.hottest >= Cooling.hotC ? Theme.alert : Theme.text
+                TextMetrics {
+                    id: glyphInk
+                    font: ownGlyph.font
+                    text: ownGlyph.text
+                }
             }
 
             // the devices icon's dot: red while one runs low, green while
