@@ -8,8 +8,8 @@
 #   screenshot.sh text     drag out a region and copy the text in it (OCR);
 #                          nothing is saved
 #
-# The notification offers Annotate when satty is installed; it edits the
-# saved file in place.
+# The notification offers Open, Show in folder and, when satty is installed,
+# Annotate, which edits the saved file in place.
 set -euo pipefail
 
 # Keep the frozen layer visible until grim has captured the selected region.
@@ -72,14 +72,16 @@ case "${1:-area}" in
 esac
 wl-copy --type image/png < "$file"
 
-actions=()
-command -v satty &>/dev/null && actions=(-A annotate=Annotate)
+actions=(-A open=Open -A folder="Show in folder")
+command -v satty &>/dev/null && actions+=(-A annotate=Annotate)
 
 # -A makes notify-send wait for the notification to close, and print the
 # action's key if one was clicked
 choice=$(notify-send -a Screenshot -i "$file" "${actions[@]}" \
   "Screenshot saved" "$(basename "$file")" 2>/dev/null) || true
 
-if [[ $choice == annotate ]]; then
-  satty --filename "$file" --output-filename "$file" --copy-command wl-copy
-fi
+case $choice in
+  open) xdg-open "$file" ;;
+  folder) xdg-open "${file%/*}" ;;
+  annotate) satty --filename "$file" --output-filename "$file" --copy-command wl-copy ;;
+esac
