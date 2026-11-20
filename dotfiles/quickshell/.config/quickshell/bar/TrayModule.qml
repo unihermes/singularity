@@ -47,7 +47,6 @@ ModuleFrame {
     readonly property bool devicesLow: Peripherals.low || (devicesPhoneOn && Phone.shownBattery >= 0
         && Phone.shownBattery <= Peripherals.warnLevels[0] && !Phone.shownCharging)
     readonly property bool devicesPhoneOn: Phone.connected || PhoneLink.connected
-    readonly property bool devicesNotified: PhoneLink.connected && PhoneLink.device.notifications.length > 0
 
     // the tray's items in the saved order
     readonly property var ordered: {
@@ -291,17 +290,17 @@ ModuleFrame {
             }
 
             // the devices icon's dot: red while one runs low, green while
-            // the phone's on screen, else accent while it has notifications
+            // the phone's on screen, none otherwise
             Rectangle {
                 visible: trayIcon.modelData === trayFrame.devicesItem
-                    && (trayFrame.devicesLow || Phone.mirroring || trayFrame.devicesNotified)
+                    && (trayFrame.devicesLow || Phone.mirroring)
                 anchors.top: parent.top
                 anchors.right: parent.right
                 anchors.margins: Theme.spaceXs
                 width: Theme.spaceM
                 height: width
                 radius: width / 2
-                color: trayFrame.devicesLow ? Theme.alert : Phone.mirroring ? Theme.good : Theme.accent
+                color: trayFrame.devicesLow ? Theme.alert : Theme.good
             }
 
             MouseArea {
