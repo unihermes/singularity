@@ -502,7 +502,7 @@ Singleton {
     readonly property var widgetDefaults: ({
         left:   ["controlcentre", "activeapp", "appmenu", "search", "taskview", "workspaces", "windows"],
         centre: ["visualizer", "clock", "weather"],
-        right:  ["recorder", "privacy", "drives", "phone", "vpn", "failed", "updates", "claude", "notifications", "tray",
+        right:  ["recorder", "privacy", "drives", "vpn", "failed", "updates", "claude", "notifications", "tray",
                  "bluetooth", "network", "volume", "brightness", "battery", "desktop"],
     })
 
@@ -531,9 +531,6 @@ Singleton {
         privacy:       { label: "Privacy",        icon: "󰍬" },
         recorder:      { label: "Recording",      icon: "󰑋" },
         drives:        { label: "Drives",         icon: "󰕓" },
-        // Devices: the phone and the peripherals; the key is the old Phone
-        // module's, so saved layouts keep it where it was
-        phone:         { label: "Devices",        icon: "󰾰" },
         vpn:           { label: "VPN",            icon: "󰖂" },
         failed:        { label: "Failed Services", icon: "󰀦" },
         updates:       { label: "Updates",        icon: "󰚰" },

@@ -27,7 +27,7 @@ ModuleFrame {
     property bool drawerOpen: false
     // an icon tucked in the closed drawer is asking for attention
     readonly property bool drawerAttention: Settings.trayDrawer && !drawerOpen
-        && ordered.some(it => it !== coolingItem && !shown(it) && it.status === Status.NeedsAttention)
+        && ordered.some(it => !isOwn(it) && !shown(it) && it.status === Status.NeedsAttention)
 
     readonly property int slotW: Theme.traySlotW
 
@@ -36,11 +36,25 @@ ModuleFrame {
         icon: "", menu: null, hasMenu: true, onlyMenu: false
     })
 
+    readonly property var devicesItem: ({
+        id: "singularity-devices", title: "Devices", tooltipTitle: "Devices",
+        icon: "", menu: null, hasMenu: true, onlyMenu: false
+    })
+    // the shell's own icons, each opening a flyout of its own
+    function isOwn(it) { return it === coolingItem || it === devicesItem }
+    function flyoutOf(it) { return it === devicesItem ? "devices" : "cooling" }
+    readonly property bool devicesShown: Phone.shown || Peripherals.devices.length > 0
+    readonly property bool devicesLow: Peripherals.low || (devicesPhoneOn && Phone.shownBattery >= 0
+        && Phone.shownBattery <= Peripherals.warnLevels[0] && !Phone.shownCharging)
+    readonly property bool devicesPhoneOn: Phone.connected || PhoneLink.connected
+    readonly property bool devicesNotified: PhoneLink.connected && PhoneLink.device.notifications.length > 0
+
     // the tray's items in the saved order
     readonly property var ordered: {
         var saved = Settings.trayOrder
         var hidden = Settings.trayHidden
         var l = Array.from(SystemTray.items.values)
+        if (devicesShown) l.push(devicesItem)
         if (Cooling.available) l.push(coolingItem)
         l = l.filter(it => hidden.indexOf(host.bar.trayName(it)) === -1)
         var rank = l.map((it, i) => {
@@ -98,11 +112,11 @@ ModuleFrame {
     property int showWaits: 0
     property int showRaises: 0
     function showApp(item) {
-        if (item === coolingItem) {
+        if (isOwn(item)) {
             for (var i = 0; i < trayRepeater.count; i++) {
                 var icon = trayRepeater.itemAt(i)
-                if (icon && icon.modelData === coolingItem) {
-                    host.screenScope.toggleFlyout("cooling", icon)
+                if (icon && icon.modelData === item) {
+                    host.screenScope.toggleFlyout(flyoutOf(item), icon)
                     return
                 }
             }
@@ -202,7 +216,7 @@ ModuleFrame {
             readonly property int slot: trayFrame.slots[index] === undefined ? -1 : trayFrame.slots[index]
             readonly property bool dragged: trayFrame.dragFrom !== -1 && trayFrame.dragFrom === slot
             // the icon whose menu is open is lit as if hovered
-            readonly property bool opened: (modelData === trayFrame.coolingItem && host.screenScope.openFlyout === "cooling")
+            readonly property bool opened: (trayFrame.isOwn(modelData) && host.screenScope.openFlyout === trayFrame.flyoutOf(modelData))
                 || host.screenScope.openFlyout === "traymenu"
                 && !!host.trayMenu.item && host.trayMenu.item.item === modelData
             readonly property bool hovered: trayMouse.containsMouse || opened
@@ -249,19 +263,36 @@ ModuleFrame {
             }
 
             TintedIcon {
-                visible: trayIcon.modelData !== trayFrame.coolingItem
+                visible: !trayFrame.isOwn(trayIcon.modelData)
                 anchors.centerIn: parent
                 source: trayIcon.modelData.icon
                 implicitSize: Theme.trayIconSize
             }
 
             Text {
-                visible: trayIcon.modelData === trayFrame.coolingItem
+                visible: trayFrame.isOwn(trayIcon.modelData)
                 anchors.centerIn: parent
-                text: "󰈐"
+                text: trayIcon.modelData === trayFrame.devicesItem
+                    ? (trayFrame.devicesPhoneOn ? "󰾰" : "󰍽") : "󰈐"
                 font.family: Theme.fontIcon
                 font.pixelSize: Theme.trayIconSize
-                color: Cooling.hottest >= Cooling.hotC ? Theme.alert : Theme.text
+                color: trayIcon.modelData === trayFrame.devicesItem
+                    ? (Phone.unauthorized ? Theme.alert : Theme.text)
+                    : Cooling.hottest >= Cooling.hotC ? Theme.alert : Theme.text
+            }
+
+            // the devices icon's dot: red while one runs low, green while
+            // the phone's on screen, else accent while it has notifications
+            Rectangle {
+                visible: trayIcon.modelData === trayFrame.devicesItem
+                    && (trayFrame.devicesLow || Phone.mirroring || trayFrame.devicesNotified)
+                anchors.top: parent.top
+                anchors.right: parent.right
+                anchors.margins: Theme.spaceXs
+                width: Theme.spaceM
+                height: width
+                radius: width / 2
+                color: trayFrame.devicesLow ? Theme.alert : Phone.mirroring ? Theme.good : Theme.accent
             }
 
             MouseArea {
@@ -300,7 +331,9 @@ ModuleFrame {
                 onClicked: mouse => {
                     if (moved) return
                     var item = trayIcon.modelData
-                    if (item === trayFrame.coolingItem && mouse.button !== Qt.RightButton) {
+                    if (trayFrame.isOwn(item) && mouse.button === Qt.MiddleButton) {
+                        if (item === trayFrame.devicesItem) Phone.toggleMirror()
+                    } else if (trayFrame.isOwn(item) && mouse.button !== Qt.RightButton) {
                         trayFrame.showApp(item)
                     } else if (mouse.button === Qt.MiddleButton) {
                         item.secondaryActivate()

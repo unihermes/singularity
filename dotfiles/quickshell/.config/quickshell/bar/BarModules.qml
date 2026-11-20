@@ -28,7 +28,7 @@ Item {
         network: netBtn, volume: volBtn, brightness: brightBtn,
         battery: battBtn, tray: trayFrame,
         visualizer: musicFrame, weather: weatherBtn,
-        notifications: notifBtn, privacy: privacyBtn, recorder: recorderBtn, phone: phoneBtn, vpn: vpnBtn, claude: claudeBtn,
+        notifications: notifBtn, privacy: privacyBtn, recorder: recorderBtn, vpn: vpnBtn, claude: claudeBtn,
         failed: failedBtn, updates: updatesBtn, drives: drivesBtn,
         desktop: desktopBtn })
 
@@ -430,29 +430,6 @@ Item {
         // left: the history; right: Do Not Disturb
         onActivated: Notifications.toggle(screenScope.modelData)
         onRightClicked: Notifications.toggleDnd()
-    }
-
-    // Devices (the phone's key, so saved layouts keep it): the phone and
-    // the peripherals with a battery. The devices glyph while the phone's
-    // connected, the mouse without it; a word while the phone waits to be
-    // allowed over USB or asks to pair; a red dot while one runs low, else
-    // a green one while the phone's on screen, else an accent one while it has notifications.
-    BarModule {
-        id: phoneBtn
-        readonly property bool phoneOn: Phone.connected || PhoneLink.connected
-        readonly property bool phoneLow: phoneOn && Phone.shownBattery >= 0
-            && Phone.shownBattery <= Peripherals.warnLevels[0] && !Phone.shownCharging
-        visible: (Phone.shown || Peripherals.devices.length > 0) && Settings.widgetVisible("phone")
-        icon: phoneOn ? "󰾰" : "󰍽"
-        label: PhoneLink.request ? "Pair" : Phone.unauthorized ? "Allow" : ""
-        iconColor: Phone.unauthorized ? Theme.alert : PhoneLink.request ? Theme.accent : "transparent"
-        readonly property bool low: Peripherals.low || phoneLow
-        readonly property bool notified: PhoneLink.connected && PhoneLink.device.notifications.length > 0
-        dot: low || Phone.mirroring || notified
-        dotColor: low ? Theme.alert : Phone.mirroring ? Theme.good : Theme.accent
-        active: screenScope.openFlyout === "devices"
-        onActivated: screenScope.toggleFlyout("devices", phoneBtn)
-        onMiddleClicked: Phone.toggleMirror()
     }
 
     // The Claude sidebar (Ai): turning while it works, lit while a prompt
