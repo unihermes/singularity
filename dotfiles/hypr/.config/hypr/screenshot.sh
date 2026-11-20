@@ -77,7 +77,7 @@ command -v satty &>/dev/null && actions+=(-A annotate=Annotate)
 
 # -A makes notify-send wait for the notification to close, and print the
 # action's key if one was clicked
-choice=$(notify-send -a Screenshot -i "$file" "${actions[@]}" \
+choice=$(notify-send -a Screenshot -i "$file" -h "string:x-singularity-file:$file" "${actions[@]}" \
   "Screenshot saved" "$(basename "$file")" 2>/dev/null) || true
 
 case $choice in

@@ -64,13 +64,17 @@ Item {
         const e = entry
         const b = []
         if (code !== "") b.push({ text: "Copy " + code, primary: true, run: () => Notifications.copy(e, root.code) })
-        const own = actions.filter(a => a.identifier !== "default" && a.text !== "")
-        // a sender with an Open action of its own (a saved capture) is opened by that
-        const ownOpen = own.some(a => a.text === "Open")
-        if (!ownOpen) b.push({ text: e.phone && !Notifications.desktopFor(e) ? "Open on phone" : "Open",
-                 primary: code === "", run: () => Notifications.activate(e) })
-        own.forEach(a => b.push({ text: a.text, primary: ownOpen && a.text === "Open" && code === "",
-                                  run: () => Notifications.invoke(e, a) }))
+        const file = e.file !== ""
+        if (file) {
+            b.push({ text: "Open", primary: code === "", run: () => Notifications.openFile(e) })
+            b.push({ text: "Show in folder", primary: false, run: () => Notifications.showFile(e) })
+        } else {
+            b.push({ text: e.phone && !Notifications.desktopFor(e) ? "Open on phone" : "Open",
+                     primary: code === "", run: () => Notifications.activate(e) })
+        }
+        actions.filter(a => a.identifier !== "default" && a.text !== ""
+                && !(file && (a.text === "Open" || a.text === "Show in folder")))
+            .forEach(a => b.push({ text: a.text, primary: false, run: () => Notifications.invoke(e, a) }))
         if (phoneNote) phoneNote.actions.filter(a => a !== "").forEach(a => b.push({
             text: a, primary: false, run: () => {
                 Notifications.hidePopup(e)

@@ -205,7 +205,7 @@ Singleton {
     // a notification with the file; Open plays it, Show in folder opens its folder
     function announce(title, file) {
         Quickshell.execDetached(["sh", "-c",
-            'c=$(notify-send -a Recorder -i video-x-generic -A open=Open -A folder="Show in folder" "$0" "${1##*/}") || exit 0\n'
+            'c=$(notify-send -a Recorder -i video-x-generic -h "string:x-singularity-file:$1" -A open=Open -A folder="Show in folder" "$0" "${1##*/}") || exit 0\n'
             + 'case $c in open) xdg-open "$1" ;; folder) xdg-open "${1%/*}" ;; esac', title, file])
     }
 

@@ -239,6 +239,19 @@ Singleton {
         return true
     }
 
+    // a saved capture's file (the x-singularity-file hint), opened or shown in its folder;
+    // these work from the history, where the sender's own actions are gone
+    function openFile(entry) {
+        hidePopup(entry)
+        shown = false
+        Quickshell.execDetached([Quickshell.env("HOME") + "/.config/quickshell/scripts/open-file.sh", entry.file])
+    }
+    function showFile(entry) {
+        hidePopup(entry)
+        shown = false
+        Quickshell.execDetached(["thunar", entry.file.substring(0, entry.file.lastIndexOf("/"))])
+    }
+
     // The sender's default action if it has one, then the app's window
     // brought to the front (on whatever workspace, the scratchpad too), else
     // the app started. A phone's notification opens its app here when it's
@@ -425,6 +438,7 @@ Singleton {
             phone: n.hints["x-singularity-phone"] !== undefined,
             phonePackage: String(n.hints["x-singularity-phone"] || ""),
             phoneId: String(n.hints["x-singularity-phone-id"] || ""),
+            file: String(n.hints["x-singularity-file"] || ""),
             summary: n.summary,
             body: n.body,
             icon: iconFor(n),
@@ -527,6 +541,7 @@ Singleton {
         const entries = history.filter(e => !e.transient).map(e => ({
             id: e.id, appName: e.appName, desktopEntry: e.desktopEntry,
             phone: e.phone, phonePackage: e.phonePackage, phoneId: e.phoneId,
+            file: e.file,
             summary: e.summary, body: e.body,
             icon: e.icon,
             // image data doesn't outlive the notification; a file does
@@ -561,6 +576,7 @@ Singleton {
                     appName: String(x.appName || ""), desktopEntry: String(x.desktopEntry || ""),
                     phone: !!x.phone, phonePackage: String(x.phonePackage || ""),
                     phoneId: String(x.phoneId || ""),
+                    file: String(x.file || ""),
                     summary: String(x.summary || ""),
                     body: String(x.body || ""), icon: String(x.icon || ""),
                     picture: String(x.picture || ""), urgency: x.urgency | 0,
