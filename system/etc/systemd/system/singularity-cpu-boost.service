@@ -1,0 +1,11 @@
+[Unit]
+Description=Keep CPU boost on under every power profile
+After=power-profiles-daemon.service
+BindsTo=power-profiles-daemon.service
+
+[Service]
+ExecStart=/usr/local/lib/singularity/singularity-cpu-boost
+Restart=on-failure
+
+[Install]
+WantedBy=power-profiles-daemon.service

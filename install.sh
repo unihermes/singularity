@@ -701,6 +701,13 @@ have_unit() {
 if have_unit power-profiles-daemon.service; then
   log "enabling power-profiles-daemon"
   sudo systemctl enable --now power-profiles-daemon.service
+  # Desktop: Power Saver keeps CPU boost (PPD would cap the CPU at base clock)
+  if [[ $machine == desktop ]]; then
+    put /usr/local/lib/singularity/singularity-cpu-boost
+    put /etc/systemd/system/singularity-cpu-boost.service
+    sudo systemctl daemon-reload
+    sudo systemctl enable --now singularity-cpu-boost.service
+  fi
 fi
 
 # Ollama for the sidebar's local engine, with a 32768-token context (its

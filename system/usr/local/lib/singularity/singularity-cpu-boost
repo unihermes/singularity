@@ -1,0 +1,17 @@
+#!/bin/bash
+# Keeps CPU boost on under every power profile: power-profiles-daemon turns
+# amd-pstate's per-policy boost off on Power Saver, capping a 7700X at
+# 4.5 GHz. Rewrites it after each profile change; the EPP hint stays PPD's.
+set -uo pipefail
+boost_on() {
+    sleep 0.3  # let PPD finish its own writes first
+    for f in /sys/devices/system/cpu/cpufreq/policy*/boost; do
+        [[ -w $f && $(<"$f") != 1 ]] && echo 1 >"$f"
+    done
+}
+boost_on
+gdbus monitor --system --dest org.freedesktop.UPower.PowerProfiles \
+    --object-path /org/freedesktop/UPower/PowerProfiles |
+while read -r line; do
+    [[ $line == *ActiveProfile* ]] && boost_on
+done
