@@ -345,7 +345,7 @@ Singleton {
     }
 
     CommandProbe { id: wgProbe; name: "wg-quick" }
-    CommandProbe { id: helperProbe; name: "singularity-vpn" }
+    CommandProbe { id: helperProbe; name: "/usr/local/lib/singularity/singularity-vpn" }
     CommandProbe { id: natpmpProbe; name: "natpmpc" }
     CommandProbe { id: qbitProbe; name: "qbittorrent" }
     readonly property bool hasQbit: qbitProbe.found
