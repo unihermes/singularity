@@ -92,7 +92,7 @@ var styles = {
             // as the menu bar reads: live indicators, background services,
             // the tray, media and weather, then the system controls with the
             // network and battery nearest the search, notifications and clock
-            right: ["privacy", "recorder", "failed", "updates", "drives", "vpn", "claude", "tray",
+            right: ["privacy", "recorder", "failed", "updates", "drives", "vpn", "claude", "tray", "devices",
                     "visualizer", "weather", "bluetooth", "volume", "brightness", "network", "battery", "search",
                     "notifications", "clock"],
         },
@@ -162,7 +162,7 @@ var styles = {
         // open windows; the tray, the clock and the Action Centre at the right
         bar: {
             left: ["controlcentre", "search", "taskview", "workspaces", "windows"],
-            right: ["tray", "recorder", "privacy", "drives", "vpn", "failed", "updates", "claude",
+            right: ["tray", "devices", "recorder", "privacy", "drives", "vpn", "failed", "updates", "claude",
                     "visualizer", "weather", "bluetooth", "network", "battery", "clock", "notifications", "desktop"],
             // Windows keeps these in its flyouts, not the taskbar
             hidden: ["volume", "brightness"],

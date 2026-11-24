@@ -503,7 +503,7 @@ Singleton {
         left:   ["controlcentre", "activeapp", "appmenu", "search", "taskview", "workspaces", "windows"],
         centre: ["visualizer", "clock", "weather"],
         right:  ["recorder", "privacy", "drives", "vpn", "failed", "updates", "claude", "notifications", "tray",
-                 "bluetooth", "network", "volume", "brightness", "battery", "desktop"],
+                 "devices", "bluetooth", "network", "volume", "brightness", "battery", "desktop"],
     })
 
     // Every module's name and icon. A new module also needs widgetDefaults
@@ -523,6 +523,7 @@ Singleton {
         brightness:    { label: "Brightness",     icon: "󰃠" },
         battery:       { label: "Battery",        icon: "󰁹" },
         tray:          { label: "System Tray",    icon: "󰀻" },
+        devices:       { label: "Devices",        icon: "󰄜" },
         // the Music module; the key is the old visualizer's, so saved
         // layouts keep it where it was
         visualizer:    { label: "Music",          icon: "󰝚" },

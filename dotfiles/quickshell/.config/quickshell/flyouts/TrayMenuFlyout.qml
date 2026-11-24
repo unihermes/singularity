@@ -126,8 +126,7 @@ FlyoutPanel {
 
         FlyoutRow {
             leadingIcon: "󰖯"
-            label: trayMenu.item && trayMenu.item.id === "singularity-cooling" ? "Cooling controls"
-                : trayMenu.item && trayMenu.item.id === "singularity-devices" ? "Devices" : "Show window"
+            label: trayMenu.item && trayMenu.item.id === "singularity-cooling" ? "Cooling controls" : "Show window"
             onActivated: {
                 var tray = scope.barWindow.widgetItem("tray")
                 scope.openFlyout = ""

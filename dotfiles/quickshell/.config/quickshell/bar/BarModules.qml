@@ -29,7 +29,7 @@ Item {
         battery: battBtn, tray: trayFrame,
         visualizer: musicFrame, weather: weatherBtn,
         notifications: notifBtn, privacy: privacyBtn, recorder: recorderBtn, vpn: vpnBtn, claude: claudeBtn,
-        failed: failedBtn, updates: updatesBtn, drives: drivesBtn,
+        failed: failedBtn, updates: updatesBtn, drives: drivesBtn, devices: devicesFrame,
         desktop: desktopBtn })
 
     // Control centre (the Start button under the taskbar). Sits left of the workspaces, where a
@@ -288,6 +288,11 @@ Item {
 
     TrayModule {
         id: trayFrame
+        host: barModules
+    }
+
+    DevicesModule {
+        id: devicesFrame
         host: barModules
     }
 

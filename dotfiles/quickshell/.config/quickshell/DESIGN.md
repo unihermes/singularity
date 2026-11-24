@@ -491,11 +491,13 @@ Every bar flyout keeps to these (settled 2026-10-20):
   it off). udisksctl does the work.
 - **Devices** (picked 2026-10-24, B "one list"): the phone and the
   peripherals with a battery (a wireless mouse or keyboard through UPower,
-  a headset through headsetcontrol) in one module, under the old Phone
-  module's key. On the bar a plain glyph: devices while the phone's
-  connected, the mouse without it; Allow or Pair beside it while the phone
-  waits; a red dot while one is at 15% or under and not charging, else a
-  green one while the phone's on screen; a middle click mirrors. The
+  a headset through headsetcontrol) in one bar module of its own
+  (`devices`, out of the tray since 2026-11-24): a slot per device, its
+  glyph and level (a bolt while charging, red at 15% or under and not
+  charging), the phone first, its glyph red while USB debugging waits and a
+  green dot while it's on screen. A click on a slot opens the flyout under
+  it with that device picked (the phone's tray open, a peripheral's row
+  marked); a middle click on the phone mirrors it. The
   flyout (2026-10-25): one DEVICES section, a row per device (glyph and
   name, a short level meter and the number, a bolt while charging, red
   when low; Off for a headset that's off). The phone's row comes first,

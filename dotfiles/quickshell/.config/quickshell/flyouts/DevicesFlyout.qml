@@ -27,7 +27,17 @@ FlyoutPanel {
     property string picked: ""
     // the phone's tray, shut each time the flyout opens
     property bool trayOpen: false
-    onOpenChanged: if (!open) { picked = ""; trayOpen = false }
+    // the device whose bar slot opened the flyout (DevicesModule), its row marked
+    property string focusKey: ""
+    function pickAnchor() {
+        if (!open) { picked = ""; trayOpen = false; focusKey = ""; return }
+        var a = root.scope.flyoutAnchorItem
+        focusKey = a && a.deviceKey !== undefined ? a.deviceKey : ""
+        trayOpen = focusKey === "phone"
+    }
+    onOpenChanged: pickAnchor()
+    // built lazily, on the first open
+    Component.onCompleted: pickAnchor()
 
     readonly property bool phoneOn: Phone.connected || PhoneLink.connected
     // the paired phone while it's out of reach
@@ -339,6 +349,7 @@ FlyoutPanel {
             level: modelData.level
             charging: modelData.charging
             trailingAlert: Peripherals.isLow(modelData)
+            highlighted: modelData.key === root.focusKey
             dimmed: modelData.level < 0
             enabled: false
         }
