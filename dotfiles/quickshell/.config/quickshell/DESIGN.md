@@ -493,8 +493,9 @@ Every bar flyout keeps to these (settled 2026-10-20):
   peripherals with a battery (a wireless mouse or keyboard through UPower,
   a headset through headsetcontrol) in one bar module of its own
   (`devices`, out of the tray since 2026-11-24): a slot per device, its
-  glyph and level (a bolt while charging, red at 15% or under and not
-  charging), the phone first, its glyph red while USB debugging waits and a
+  glyph (a little under the bar's icon size) and level (a bolt while
+  charging, red at 15% or under and not charging), the mouse first, then
+  the headset, other peripherals and the phone, its glyph red while USB debugging waits and a
   green dot while it's on screen. A click on a slot opens the flyout under
   it with that device picked (the phone's tray open, a peripheral's row
   marked); a middle click on the phone mirrors it. The

@@ -1,5 +1,6 @@
-// The Devices module: one slot per device with a battery, the phone first
-// and then every peripheral (Peripherals), each its glyph and level (a bolt
+// The Devices module: one slot per device with a battery, the mouse first,
+// then the headset, any other peripheral (Peripherals) and the phone, each
+// its glyph and level (a bolt
 // while charging, red when it runs low). A click on a slot opens the Devices
 // flyout under it, with that device picked (the phone's tray open, a
 // peripheral's row marked); middle on the phone mirrors it. The phone's slot
@@ -19,10 +20,16 @@ ModuleFrame {
 
     readonly property bool phoneOn: Phone.connected || PhoneLink.connected
     // each { key, glyph, name, level (-1 none), charging }
-    readonly property var slots: (Phone.shown ? [{
-            key: "phone", glyph: "󰄜", name: Phone.shownName || "Phone",
+    readonly property var kindOrder: ["Mouse", "Headset", "Headphones"]
+    function rank(d) {
+        var i = kindOrder.indexOf(d.kind)
+        return i === -1 ? (d.key === "phone" ? kindOrder.length + 1 : kindOrder.length) : i
+    }
+    readonly property var slots: Peripherals.devices.concat(Phone.shown ? [{
+            key: "phone", glyph: "󰄜", kind: "Phone", name: Phone.shownName || "Phone",
             level: phoneOn ? Phone.shownBattery : -1, charging: Phone.shownCharging
-        }] : []).concat(Peripherals.devices)
+        }] : []).map((d, i) => ({ d: d, i: i }))
+        .sort((a, b) => rank(a.d) - rank(b.d) || a.i - b.i).map(x => x.d)
 
     visible: slots.length > 0 && Settings.widgetVisible("devices")
     active: host.screenScope.openFlyout === "devices"
@@ -76,7 +83,7 @@ ModuleFrame {
                     color: slot.modelData.key === "phone" && Phone.unauthorized ? Theme.alert
                         : slot.modelData.level < 0 ? Theme.subtext : Theme.text
                     font.family: Theme.fontIcon
-                    font.pixelSize: Theme.iconSize
+                    font.pixelSize: Math.round(Theme.iconSize * 0.82)
                 }
 
                 Text {
