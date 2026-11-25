@@ -1030,8 +1030,10 @@ Singleton {
         path: root.stateDir + "/appearance.json"
         // preload: a FileView only loads when text() is read, which nothing does
         preload: true
-        // blocking, so Theme binds to the saved values from the first frame
         blockLoading: true
+        // blockLoading only blocks a text() read, so the first load is waited
+        // for here: Theme binds to the saved values from the first frame
+        Component.onCompleted: waitForJob()
         watchChanges: true
         // Expected on a fresh install: there is no file until the first
         // edit, and the defaults on the adapter are the right answer.
